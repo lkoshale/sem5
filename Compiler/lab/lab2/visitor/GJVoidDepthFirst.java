@@ -11,7 +11,14 @@ import java.util.*;
  * order.  Your visitors may extend this class.
  */
 public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
-   //
+   
+	public Hashtable<String,SymbolTable>Table = new  Hashtable<String,SymbolTable>();
+	
+	public Hashtable<String,SymbolTable> getTable(){
+		return this.Table;
+	}
+	
+	//
    // Auto class visitors--probably don't need to be overridden.
    //
    public void visit(NodeList n, A argu) {
@@ -60,6 +67,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
+     
    }
 
    /**
@@ -120,10 +128,17 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
    public void visit(ClassDeclaration n, A argu) {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
+      SymbolTable sym = new SymbolTable(n.f1.f0.toString());
+      this.Table.put(n.f1.f0.toString(),sym);
+      Arg a = new Arg();
+      a.addCName(n.f1.f0.toString());
+      a.AddClassScope(n.f1.f0.toString());
+      a.addSymbolTable(sym);
       n.f2.accept(this, argu);
-      n.f3.accept(this, argu);
-      n.f4.accept(this, argu);
+      n.f3.accept(this, (A)a);
+      n.f4.accept(this,(A)a );
       n.f5.accept(this, argu);
+     // System.out.println("value : "+a.pass);
    }
 
    /**
@@ -141,9 +156,16 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
       n.f3.accept(this, argu);
+      SymbolTable sym = new SymbolTable(n.f1.f0.toString(),n.f3.f0.toString());
+      this.Table.put(n.f1.f0.toString(),sym);
+      Arg a = new Arg();
+      a.addCName(n.f1.f0.toString());
+      a.AddClassScope(n.f1.f0.toString());
+      a.addSymbolTable(sym);
+      
       n.f4.accept(this, argu);
-      n.f5.accept(this, argu);
-      n.f6.accept(this, argu);
+      n.f5.accept(this, (A)a);
+      n.f6.accept(this, (A)a);
       n.f7.accept(this, argu);
    }
 
@@ -153,10 +175,20 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f2 -> ";"
     */
    public void visit(VarDeclaration n, A argu) {
-      n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
+	   Arg ty = new Arg();
+      n.f0.accept(this, (A)ty);
+      	Arg id = new Arg();
+      n.f1.accept(this, (A)id);
       n.f2.accept(this, argu);
-   }
+     // System.out.println(ty.pass+" "+id.getPass());
+      
+      Arg b = (Arg)argu;
+    if(b.sym !=null) {
+    	//System.out.println(b.sym.ClassName+"called from inside");
+   	  b.sym.AddVar(b.scope, id.pass, ty.pass);
+    }
+    
+  }
 
    /**
     * f0 -> "public"
@@ -174,16 +206,28 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f12 -> "}"
     */
    public void visit(MethodDeclaration n, A argu) {
+	   Arg b = (Arg)argu;
+	  
       n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
+      Arg rTy = new Arg();
+      n.f1.accept(this, (A)rTy);
       n.f2.accept(this, argu);
+      
+      b.sym.AddMethod(n.f2.f0.toString(),rTy.pass);
+    //  System.out.println("methode return : "+n.f2.f0.toString()+" "+rTy.pass);
+      
+      b.addMname(n.f2.f0.toString());
+      b.AddMethodScope(n.f2.f0.toString());
+      
       n.f3.accept(this, argu);
-      n.f4.accept(this, argu);
+      n.f4.accept(this, (A)b);
       n.f5.accept(this, argu);
       n.f6.accept(this, argu);
-      n.f7.accept(this, argu);
+      
+      n.f7.accept(this, (A)b);
       n.f8.accept(this, argu);
       n.f9.accept(this, argu);
+      
       n.f10.accept(this, argu);
       n.f11.accept(this, argu);
       n.f12.accept(this, argu);
@@ -203,8 +247,16 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     * f1 -> Identifier()
     */
    public void visit(FormalParameter n, A argu) {
-      n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
+	   
+	  Arg b = (Arg)argu;
+	  
+	  Arg typ = new Arg();
+      n.f0.accept(this, (A)typ);
+      Arg id = new Arg();
+      n.f1.accept(this, (A)id);
+      
+      b.sym.addParmtoMethod(b.Mname, typ.pass, id.pass);
+     // System.out.println(b.Mname+" parm :"+ typ.pass+" "+id.pass);
    }
 
    /**
@@ -235,6 +287,8 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       n.f0.accept(this, argu);
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
+      Arg b = (Arg)argu;
+      b.addPass("ArrayType");
    }
 
    /**
@@ -242,13 +296,17 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     */
    public void visit(BooleanType n, A argu) {
       n.f0.accept(this, argu);
-   }
+      Arg b = (Arg)argu;
+      b.addPass("Boolean");
+    }
 
    /**
     * f0 -> "int"
     */
    public void visit(IntegerType n, A argu) {
       n.f0.accept(this, argu);
+      Arg b = (Arg)argu;
+      b.addPass("Integer");
    }
 
    /**
@@ -584,7 +642,9 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     */
    public void visit(Identifier n, A argu) {
       n.f0.accept(this, argu);
-   }
+      Arg b = (Arg)argu;
+      b.addPass(n.f0.toString());
+    }
 
    /**
     * f0 -> "this"

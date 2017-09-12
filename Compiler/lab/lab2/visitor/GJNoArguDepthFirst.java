@@ -14,6 +14,15 @@ public class GJNoArguDepthFirst<R> implements GJNoArguVisitor<R> {
    //
    // Auto class visitors--probably don't need to be overridden.
    //
+	
+	//R is string
+	
+	public Hashtable<String,SymbolTable>Table = new  Hashtable<String,SymbolTable>();
+	
+	public Hashtable<String,SymbolTable> getTable(){
+		return this.Table;
+	}
+	
    public R visit(NodeList n) {
       R _ret=null;
       int _count=0;
@@ -137,6 +146,8 @@ public class GJNoArguDepthFirst<R> implements GJNoArguVisitor<R> {
       R _ret=null;
       n.f0.accept(this);
       n.f1.accept(this);
+      SymbolTable sym = new SymbolTable(n.f1.f0.toString());
+      this.Table.put(n.f1.f0.toString(),sym);
       n.f2.accept(this);
       n.f3.accept(this);
       n.f4.accept(this);
@@ -160,6 +171,8 @@ public class GJNoArguDepthFirst<R> implements GJNoArguVisitor<R> {
       n.f1.accept(this);
       n.f2.accept(this);
       n.f3.accept(this);
+      SymbolTable sym = new SymbolTable(n.f1.f0.toString(),n.f3.f0.toString());
+      this.Table.put(n.f1.f0.toString(),sym);
       n.f4.accept(this);
       n.f5.accept(this);
       n.f6.accept(this);
