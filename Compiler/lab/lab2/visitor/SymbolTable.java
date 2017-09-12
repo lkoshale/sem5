@@ -7,6 +7,7 @@ public class SymbolTable {
 	 Hashtable<String,String>FieldVar= new  Hashtable<String,String>();
 	 Hashtable<String,MethodD> MethodDecl= new  Hashtable<String,MethodD>();
 	 String Extend = null;
+	
 	 
 	 public SymbolTable() {}
 	 
@@ -59,7 +60,6 @@ public class SymbolTable {
 			 String var = scope.substring(k+1);
 		//	 System.out.println(cls+"::"+var+" : "+name+" ,"+typ);
 			 MethodD m = getMethodTable(var);
-			 System.out.println("in ADD var "+scope);
 			 if(m!=null) {
 				 m.AddTempVar(name,typ);
 				 System.out.println(scope+" :: "+name+" "+m.TempVar.get(name));
@@ -85,6 +85,74 @@ public class SymbolTable {
 			 m.AddTempVar(name,typ);
 			 System.out.println(Mname+" param: "+name+" "+typ);
 		 }
+	 }
+	 
+	 
+	 public String LookupVar(Hashtable<String,SymbolTable> Table,String scope,String name) {
+		 
+		 String ans = null;
+		 
+		 int k = scope.indexOf('$');
+			// System.out.println("in addvar fn "+scope);
+			 if(k!=-1) {
+				 String cls = scope.substring(0,k);
+				 String var = scope.substring(k+1);
+				 MethodD m = getMethodTable(var);
+				 
+				 if(m!=null) {
+					 if(m.TempVar.containsKey(name)) {
+						 return m.TempVar.get(name);
+					 }
+					 else {
+						 return this.LookupVar(Table,cls, name);
+					 }
+				 }
+				 
+				 
+			 }
+			 else {
+				 
+				 if(scope.length()>0) {
+					if(this.FieldVar.containsKey(name)) {
+						return this.FieldVar.get(name);
+					}
+				
+//					if(this.MethodDecl.containsKey(name)) {
+//						MethodD mth = this.MethodDecl.get(name);
+//						return mth.returnType;
+//					}
+//					
+					if(this.Extend != null) {
+						if(Table.containsKey(this.Extend)) {
+							SymbolTable stb = Table.get(this.Extend);
+							return stb.LookupVar(Table,this.Extend, name);
+						}
+					}
+					
+				 }
+				 
+				 return null;
+			 }
+		 
+		 
+		 return ans;
+	 }
+	 
+	 
+	 public String LookupMethod(Hashtable<String,SymbolTable> Table,String arg,String pex,String Mname) {
+		 String ans = null;
+		 if(pex.compareTo("this")==0) {
+			 
+			 if(this.MethodDecl.containsKey(Mname)) {
+				 
+			 }
+			 else
+				 return null;
+			 
+		 }
+		 
+		 
+		 return ans;
 	 }
 	 
 }

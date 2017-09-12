@@ -207,6 +207,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
     */
    public void visit(MethodDeclaration n, A argu) {
 	   Arg b = (Arg)argu;
+	   String str = b.scope;
 	  
       n.f0.accept(this, argu);
       Arg rTy = new Arg();
@@ -231,6 +232,8 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       n.f10.accept(this, argu);
       n.f11.accept(this, argu);
       n.f12.accept(this, argu);
+      
+      b.scope = str;
    }
 
    /**
