@@ -19,6 +19,7 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
    
    public void setTable( Hashtable<String,SymbolTable> Table) {
 	   this.Table = Table;
+	   TYPE.Table = Table;
    }
    
    //
@@ -125,7 +126,19 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       isIDval = false;
       n.f12.accept(this, argu);
       n.f13.accept(this, argu);
-      n.f14.accept(this, argu);
+      
+      Car a = new Car();
+      
+      SymbolTable sm = null ;
+      for(String s : Table.keySet()) {
+    	  sm = Table.get(s);
+    	//  System.out.println(s+" "+sm.ClassName);
+    	  break;
+      }
+      
+      a.sym = sm;
+      
+      n.f14.accept(this, (A)a);
       n.f15.accept(this, argu);
       n.f16.accept(this, argu);
       return _ret;
@@ -796,15 +809,20 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       n.f5.accept(this, argu);
       
       //method lookup
+     // System.out.println("pass msg "+a.sym.ClassName);
+      String typ = a.sym.LookupMethod(Table,a.mList,pexp.type,mName);
       
-      
+      if(typ==null) {
+    	  System.out.println("Symbol not found "+pexp+"::"+mName); //TODO change
+    	  System.exit(0);
+      }
       
       //restore state
       a.mList = mLst;
     
       //return method typ;
       
-      return _ret;
+      return (R)(new TYPE(typ));
    
    }
 
@@ -909,7 +927,7 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
     		  System.out.println("Symbol not found "+n.f0.tokenImage+"::"+scope); //TODO change
         	  System.exit(0);
     	  }
-    	  System.out.println("inside ident val false -- "+n.f0.tokenImage+" "+typ); 
+    	 // System.out.println("inside ident val false -- "+n.f0.tokenImage+" "+typ); 
     	  return (R)(new TYPE(typ));
       }
       

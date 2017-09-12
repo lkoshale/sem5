@@ -139,16 +139,38 @@ public class SymbolTable {
 	 }
 	 
 	 
-	 public String LookupMethod(Hashtable<String,SymbolTable> Table,String arg,String pex,String Mname) {
+	 public String LookupMethod(Hashtable<String,SymbolTable> Table,List<String>mL,String classN,String Mname) {
 		 String ans = null;
-		 if(pex.compareTo("this")==0) {
+		 
+		 if(classN==null) {
 			 
-			 if(this.MethodDecl.containsKey(Mname)) {
+		 }
+		 
+		 if(Table.containsKey(classN)) {
+			 SymbolTable sym = Table.get(classN);
+			 
+			 if(sym.MethodDecl.containsKey(Mname)) {
+				 
+				 MethodD mth = sym.MethodDecl.get(Mname);
+				 
+				 if(mL.size()!=mth.arg.size()) {
+					 System.out.println("arg size differ !!"); //TODO change
+					 return null;
+				 }
+				 
+				 for(int i=0;i<mL.size();i++) {
+					 if(mL.get(i).compareTo(mth.arg.get(i))!=0) {
+						 System.out.println("arg differ type at !! "+i); //TODO change
+						 return null;
+					 }
+				 }
+				 
+				 return mth.returnType;
 				 
 			 }
-			 else
-				 return null;
-			 
+			 else if(sym.Extend!=null) {
+				 return LookupMethod(Table,mL,sym.Extend,Mname);
+			 }
 		 }
 		 
 		 
