@@ -68,6 +68,7 @@ public class GJVoidDepthFirst<A> implements GJVoidVisitor<A> {
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
      
+     
    }
 
    /**

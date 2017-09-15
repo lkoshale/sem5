@@ -2,6 +2,7 @@ package visitor;
 
 import java.util.*;
 
+//8 12 8
 public class SymbolTable {
 	 String ClassName = null; 
 	 Hashtable<String,String>FieldVar= new  Hashtable<String,String>();
@@ -25,6 +26,12 @@ public class SymbolTable {
 	 }
 	  
 	 void AddFeild(String name,String Type) {
+	 	 
+	 	 if(this.FieldVar.containsKey(name)) {
+			 System.out.println("Type error");//+ "dup f var"); //TODO change
+			 System.exit(0);
+		 }
+	 
 		 this.FieldVar.put(name, Type);
 	 }
 	 
@@ -47,7 +54,7 @@ public class SymbolTable {
 	 void AddMethod(String MethodName,String returnTy) {
 		 MethodD object = new MethodD(this.ClassName,MethodName,returnTy);
 		 MethodDecl.put(MethodName, object);
-		 System.out.println(this.ClassName+" :: "+MethodName+", return "+returnTy);
+		// System.out.println(this.ClassName+" :: "+MethodName+", return "+returnTy);
 		 
 	 }
 	 
@@ -62,7 +69,7 @@ public class SymbolTable {
 			 MethodD m = getMethodTable(var);
 			 if(m!=null) {
 				 m.AddTempVar(name,typ);
-				 System.out.println(scope+" :: "+name+" "+m.TempVar.get(name));
+				// System.out.println(scope+" :: "+name+" "+m.TempVar.get(name));
 			 }
 			 
 			 
@@ -71,7 +78,7 @@ public class SymbolTable {
 			 if(scope.length()>0) {
 				
 				 this.AddFeild(name,typ);
-				System.out.println(scope+"::"+name+" "+FieldVar.get(name));
+				//System.out.println(scope+"::"+name+" "+FieldVar.get(name));
 			 }
 		 }
 	 }
@@ -83,7 +90,7 @@ public class SymbolTable {
 		 if(m!=null) {
 			 m.Addarg(typ);
 			 m.AddTempVar(name,typ);
-			 System.out.println(Mname+" param: "+name+" "+typ);
+			 //System.out.println(Mname+" param: "+name+" "+typ);
 		 }
 	 }
 	 
@@ -154,13 +161,20 @@ public class SymbolTable {
 				 MethodD mth = sym.MethodDecl.get(Mname);
 				 
 				 if(mL.size()!=mth.arg.size()) {
-					 System.out.println("arg size differ !!"); //TODO change
+					 
+					 System.out.println("Type error");//+ " arg size"); //TODO change
+					 System.exit(0);
 					 return null;
 				 }
 				 
 				 for(int i=0;i<mL.size();i++) {
-					 if(mL.get(i).compareTo(mth.arg.get(i))!=0) {
-						 System.out.println("arg differ type at !! "+i); //TODO change
+					 //TODO can be class subtype !!!
+					 TYPE mL1 = new TYPE(mL.get(i));
+					 TYPE mth1 = new TYPE(mth.arg.get(i));
+					 if(!mth1.Match(mL1)) {
+						 
+						 System.out.println("Type error"); //TODO change
+						 System.exit(0);
 						 return null;
 					 }
 				 }
@@ -222,6 +236,10 @@ class MethodD{
 	}
 	
 	void AddTempVar(String name,String Type) {
+		if(TempVar.containsKey(name)) {
+			System.out.println("Type error");//+" duplicate temvar"); //TODO change
+			System.exit(0);
+		}
 		this.TempVar.put(name, Type);
 	}
 	

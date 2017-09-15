@@ -4,15 +4,15 @@ class Factorial{
     }
 }
 
-class Fac  {
+class Fac {
 
 	int def;
-	
+	int[] def1;
     public int ComputeFac(int num){
     	
         int num_aux ;
         if ((num <= 1)&&(num != 1))
-            num_aux = (1+0) ;
+            num_aux = (def+(def1[0])) ;
         else
             num_aux = num *(this.ComputeFac(num-1)) ;
         
@@ -26,6 +26,7 @@ class Fac  {
 class A extends Fac {
 
 	int d;
+
 	public int Comp(int num){
     	
         int nx ;
@@ -44,13 +45,13 @@ class A extends Fac {
 class B extends A {
 
 	Fac f;
-	public int Comp(){
+	public int Comp(int num){
     	
         int nx ;
-        nx = def*1; //(this.ComputeFac(num-1)) ;
+        nx = def1.length; //(this.ComputeFac(num-1)) ;
         f = new B();
      
-        return 0 ;
+        return 0;
     }
 	
  }
