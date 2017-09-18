@@ -162,7 +162,7 @@ public class SymbolTable {
 				 
 				 if(mL.size()!=mth.arg.size()) {
 					 
-					 System.out.println("Type error");//+ " arg size"); //TODO change
+					 System.out.println("Type error");//+ " arg size"+mL+" "+mth.arg); //TODO change
 					 System.exit(0);
 					 return null;
 				 }

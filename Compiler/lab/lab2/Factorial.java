@@ -1,58 +1,24 @@
 class Factorial{
     public static void main(String[] a){
-        System.out.println(new Fac().ComputeFac((10+0)));
+        System.out.println(1);
     }
 }
 
 class Fac {
-
-	int def;
-	int[] def1;
-    public int ComputeFac(int num){
-    	
+    public int ComputeFac(int num,boolean y){
         int num_aux ;
+        B b;
         if ((num <= 1)&&(num != 1))
-            num_aux = (def+(def1[0])) ;
+            num_aux = (1+0) ;
         else
-            num_aux = num *(this.ComputeFac(num-1)) ;
-        
-     
+            num_aux = num *( this.ComputeFac( num-1, (b.C()) ) );
         return num_aux ;
     }
 }
 
+class B {
+	public boolean C(){
+		return true;
+	}
 
-
-class A extends Fac {
-
-	int d;
-
-	public int Comp(int num){
-    	
-        int nx ;
-        if ((num <= 1)&&(num != 1))
-            nx = (1+0) ;
-        else
-            nx = def*1; //(this.ComputeFac(num-1)) ;
-        
-     
-        return nx ;
-    }
-	
- }
- 
- 
-class B extends A {
-
-	Fac f;
-	public int Comp(int num){
-    	
-        int nx ;
-        nx = def1.length; //(this.ComputeFac(num-1)) ;
-        f = new B();
-     
-        return 0;
-    }
-	
- }
- 
+}

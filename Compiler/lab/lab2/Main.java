@@ -15,8 +15,8 @@ public class Main {
          Hashtable<String,SymbolTable>Table = new  Hashtable<String,SymbolTable>();
          Table = createTable.getTable();
       
-//         CheckSymbolTable.Table = Table;
-//         CheckSymbolTable.check();
+         CheckSymbolTable.Table = Table;
+         CheckSymbolTable.check();
          
          GJDepthFirst<TYPE,Car> Parse = new GJDepthFirst<>();
          Parse.setTable(Table);

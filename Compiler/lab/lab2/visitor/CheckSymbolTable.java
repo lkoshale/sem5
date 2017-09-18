@@ -12,9 +12,23 @@ public class CheckSymbolTable {
 	
 	public static void check() {
 		if(Table.size()==0) return;
+		checkExtends();
 		CirclurInheritence();
 		OverloadingBase();
 		
+	}
+	
+	
+	public static void checkExtends() {
+		for(String s : Table.keySet()) {
+			SymbolTable t = Table.get(s);
+			if(t.Extend!=null) {
+				if(!Table.containsKey(t.Extend)) {
+					System.out.println("Symbol not found");  //TODO change
+			    	System.exit(0);
+				}
+			}
+		}
 	}
 	
 	public static void CirclurInheritence() {
