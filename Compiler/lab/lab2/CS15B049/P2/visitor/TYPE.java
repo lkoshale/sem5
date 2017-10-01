@@ -18,10 +18,7 @@ public class TYPE {
 		if(this.type.compareTo(t2.type.trim())==0) {
 			return true;
 		}
-		else if(this.type.compareTo("Boolean")|| t2.type.compareTo("Integer")){
-			return true;
-			
-		}else if( (!isPrimitive(this) ) && (!isPrimitive(t2))) {
+		else if( (!isPrimitive(this) ) && (!isPrimitive(t2))) {
 			return checkSuperClass(this.type,t2.type);
 		}
 		
