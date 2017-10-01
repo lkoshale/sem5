@@ -15,6 +15,9 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
    // Auto class visitors--probably don't need to be overridden.
    //
 	
+	//TODO debug
+	public boolean DBG = false;
+	
 	public int TempNo = 25;
 	public int LabelNo = 0;
 	
@@ -486,11 +489,20 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       
       String t1 = this.genTemp();
       String t2 = this.genTemp();
-      
+      String len = this.genTemp();
+      String lbl1 = this.genLabel();
       
       String out ="";
-      out+= "MOVE "+t1+" TIMES PLUS "+des+" 1 4 \n";
-      out+= "MOVE "+t2+" PLUS "+t1+" "+id+"\n";
+      
+      out+= "MOVE "+t1+" TIMES "+des+" 4 \n";
+      out+= "HLOAD "+len+" "+id+" 0\n";
+      out+= "MOVE "+len+" TIMES "+len+" 4\n";
+      
+   		out+= "CJUMP MINUS  1 LE "+t1+ " MINUS "+len+" 1 "+lbl1+" \n ERROR\n";
+   		out+= lbl1+" NOOP\n";
+   	
+      
+      out+= "MOVE "+t2+" PLUS  PLUS "+t1+" 4 "+id+"\n";
       out+= "HSTORE "+ t2+ " 0 "+val+"\n";
    
       //TODO bound check
@@ -685,7 +697,7 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
         	out+= "JUMP "+lbl2+"\n";
         	out+= lbl3+" CJUMP "+op2+" "+lbl1+"\n";
         	out+= "JUMP "+lbl2+"\n";
-        	out+= lbl1+" NOOP\n "+ "MOVE "+val+" 0\n"+" JUMP "+lbl4;
+        	out+= lbl1+" NOOP\n "+ "MOVE "+val+" 0\n"+" JUMP "+lbl4+"\n";
         	out+= lbl2+" NOOP\n "+"MOVE "+val+" 1\n";
         	
         	out+= lbl4+ " NOOP\n";
@@ -798,12 +810,23 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       String lbl1 = this.genLabel();
       // TODO can store offset
       
+      
+//      String o = " BEGIN\n";
+//      o+=  "HLOAD "+ rt+" PLUS "+arr+ " ";
+//      o+=  " BEGIN \n MOVE "+ctemp+" TIMES "+off+" 4\n";
+//      o+=  " MOVE "+ctemp+" PLUS "+ctemp+" 4\n";
+//      o+= " RETURN \n"+ctemp+"\nEND\n";
+//      o+= " 0 \n";
+//      o+= "RETURN \n"+rt+"\nEND\n";
+//      
+      
 	  String out ="BEGIN \n";
        out+= "HLOAD "+ rt+" PLUS "+arr+ " PLUS ";
 		  
 		  	out+= "\nBEGIN\n";
 		  	out+="MOVE "+ctemp+" TIMES "+off+" 4\n";
 		  	out+= "HLOAD "+len+" "+arr+" 0\n";
+		  	out+= "MOVE "+len+" TIMES "+len+" 4\n";
 		  	out+= "CJUMP MINUS  1 LE "+ctemp+ " MINUS "+len+" 1 "+lbl1+" \n ERROR\n";
 		  	out+= lbl1+" NOOP\n";
 		  	out+="RETURN \n"+ctemp+"\nEND\n";
@@ -826,9 +849,13 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       n.f1.accept(this, argu);
       n.f2.accept(this, argu);
       
+      String t1 = this.genTemp();
       String rt = this.genTemp();
+      String t2 = this.genTemp();
+      
 	  String out ="BEGIN \n";
-		out += "HLOAD "+rt+" "+str+" 0 \n";
+	  	out+= "MOVE "+t1+" "+str+"\n";
+	  	out+= "HLOAD "+rt+" "+t1+" 0\n";
 		out+="RETURN \n"+rt+"\nEND\n";
 	  
       return (R)out;
@@ -867,14 +894,16 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       Pass p = (Pass)argu;
       Data d = Table.get(this.msgTyp);
       
-      if(d!=null) {
+      	if(this.DBG)
+    	  System.out.println("--------- "+this.msgTyp+" ---------");
     	  
+      	if(d!=null) {
     	  Method m = d.FnAr.get(this.msgTyp+"_"+n.f2.f0.tokenImage);
     	  
     	  out+= "HLOAD "+t2+" "+t1+" 0\n";
           out+= "HLOAD "+t3+" "+t2+ " "+String.valueOf(m.offset)+"\n";
+      	}
       
-      }
       
       out+= "RETURN \n"+t3+"\nEND\n";
       
@@ -887,8 +916,11 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       
       out+="( "+t1 + " ";
       
-      for(String s: this.expList) {
-    	  out+= s+" ";
+      for(int i=0;i<this.expList.size();i++) {
+    	  out+= this.expList.get(i)+" ";
+//    	  if(this.DBG) {
+//    		  System.out.print(" $ "+this.expList.get(i)+" $");
+//    	  }
       }
       
       out+= ")\n";
@@ -896,8 +928,30 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       
       this.expList = arr;
       
-      this.msgTyp = null;
-       
+     
+      if(this.msgTyp != null) {
+	      SymbolTable sym = STable.get(this.msgTyp);
+	      
+	      if(this.DBG )
+	    	  System.out.println("###"+this.msgTyp);
+	      
+	      MethodD mthdd = sym.MethodDecl.get(n.f2.f0.tokenImage);
+	      	
+	    	  if(this.DBG)
+		    	  System.out.println("******"+this.msgTyp+" "+n.f2.f0.tokenImage+"--"+mthdd.returnType);
+	      
+	   
+	    String rt = mthdd.returnType;
+	    if(rt.compareTo("ArrayType")==0 || rt.compareTo("Boolean")==0 || rt.compareTo("Integer")==0) {
+	    	this.msgTyp = null;
+	    }
+	    else {
+	    	this.msgTyp = rt;
+	    }
+	    
+      }
+      
+      
       return (R)out;
    }
 
@@ -908,9 +962,8 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
    public R visit(ExpressionList n, A argu) {
       R _ret=null;
       String str = (String) n.f0.accept(this, argu);
-      n.f1.accept(this, argu);
-      
       this.expList.add(str);
+      n.f1.accept(this, argu);
       
       return _ret;
    }
@@ -944,19 +997,23 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       R _ret=null;
       String str = (String)n.f0.accept(this, argu);
       
+      String out = str;
+      
       if(n.f0.which==3) {
     	  //str is identifier val lookup
     	  Data data = Table.get(cName);
     	  Method mth = data.FnAr.get(cName+"_"+mName);
     	  String id = Lookup(str,data,mth);
-    	  return (R)id;
+    	  out = id;
       }
       
       if(this.msg && n.f0.which==3) {
     	  this.msgTyp = SymbolTable.LookupVar(STable,cName+"$"+mName,str);
+    	  if(this.DBG)
+    		  System.out.println("----"+this.msgTyp+" "+str);
       }
       
-      return (R)str;
+      return (R)out;
       
    }
 
@@ -1037,7 +1094,7 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       out+= "HSTORE  PLUS "+arr+ " "+cntr + " 0 0 \n";
       out+= "MOVE "+cntr+" PLUS "+cntr + " 4\n";
       out+= "JUMP "+Lbl1+"\n";
-      out+= Lbl2+" HSTORE "+arr+ " 0 TIMES "+str+" 4 \n";
+      out+= Lbl2+" HSTORE "+arr+ " 0 "+str+" \n";
       out+="RETURN \n"+arr+"\nEND\n";
       
       return (R)out;
@@ -1106,9 +1163,19 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       n.f0.accept(this, argu);
       String str = (String)n.f1.accept(this, argu);
       
-      if(str=="1") return (R)"0";
-      else
-      return (R)"1";
+      String L1 = this.genLabel();
+      String L2 = this.genLabel();
+      String t = this.genTemp();
+      
+      String out = " BEGIN\n";
+      out+= "CJUMP "+str+" "+L1+"\n";
+      out+= "MOVE "+t+" 0\n";
+      out+= "JUMP "+L2+"\n";
+      out+= L1+" MOVE "+t+" 1\n";
+      out+= L2+" NOOP\n";
+      out+= "RETURN \n"+t+"\nEND\n";
+      
+      return (R)out;
       
    }
 

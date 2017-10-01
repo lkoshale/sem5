@@ -5,7 +5,7 @@ import java.util.*;
 
 public class Data {	
 	
-	public static int Moffset = 0;
+	public int Moffset = 0;
 	//key = cName+_+Mname
 	public HashMap<String,Method>FnAr = new HashMap<>();
 	
@@ -33,6 +33,8 @@ class Method{
 	public String cName;
 	
 	public int offset;
+	
+	public String RType;
 
 	
 	public List<String>Arg = new ArrayList<>();

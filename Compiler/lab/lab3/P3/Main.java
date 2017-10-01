@@ -16,6 +16,7 @@ public class Main {
          Hashtable<String,SymbolTable>Table = new  Hashtable<String,SymbolTable>();
          Table = createTable.getTable();
          
+         
          root.accept(new GJNoArguDepthFirst<Object>()); 
          
          //call Exten Algo

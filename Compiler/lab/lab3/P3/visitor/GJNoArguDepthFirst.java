@@ -240,8 +240,8 @@ public class GJNoArguDepthFirst<R> implements GJNoArguVisitor<R> {
       n.f5.accept(this);
       n.f6.accept(this);
       
-      Method mth = new Method(mName,cName,Data.Moffset);
-      Data.Moffset+=4;
+      Method mth = new Method(mName,cName,data.Moffset);
+      data.Moffset+=4;
       mth.Arg = new ArrayList(Arg);
       
       data.FnAr.put(cName+"_"+mName,mth);
@@ -252,6 +252,7 @@ public class GJNoArguDepthFirst<R> implements GJNoArguVisitor<R> {
       n.f10.accept(this);
       n.f11.accept(this);
       n.f12.accept(this);
+      
       
       Arg.clear();
       mName = null;

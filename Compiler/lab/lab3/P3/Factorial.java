@@ -5,12 +5,38 @@ class Factorial{
 }
 
 class Fac {
+	
+	int[] n;
+
     public int ComputeFac(int num){
-        int num_aux ;
-        if ((num <= 1)&&(num != 1)) // Initially it was num <= 0
-            num_aux = (1+0) ; // Initially it was num_aux = 1
-        else
-            num_aux = num * (this.ComputeFac(num-1)) ;
-        return num_aux ;
+         int z;
+         int k;
+      
+      	 n = new int[8];
+      	 
+      	 k = n.length;
+      	 n[(k-1)] = 99;
+      	 z = n[(k-1)];
+      	 
+     	 System.out.println( z );
+     		
+        return num ;
     }
+    
+    public int m(int k){
+		return k;
+	}
+}
+
+
+class B {
+
+	public int m(int k,boolean c, int j, int l){
+		return k;
+	}
+	
+	public int z(){
+		return 5;
+	}
+
 }
