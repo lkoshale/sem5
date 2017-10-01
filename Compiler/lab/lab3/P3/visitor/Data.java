@@ -34,9 +34,7 @@ class Method{
 	
 	public int offset;
 	
-	public String RType;
 
-	
 	public List<String>Arg = new ArrayList<>();
 	
 	public Method(String name,String cName,int offset) {

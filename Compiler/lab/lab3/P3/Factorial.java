@@ -6,35 +6,37 @@ class Factorial{
 
 class Fac {
 	
-	int[] n;
+	int n;
+	int diff;
 
     public int ComputeFac(int num){
-         int z;
-         int k;
-      
-      	 n = new int[8];
-      	 
-      	 k = n.length;
-      	 n[(k-1)] = 99;
-      	 z = n[(k-1)];
-      	 
-     	 System.out.println( z );
-     		
+         B b ;
+         b = new B();
+	
         return num ;
     }
     
     public int m(int k){
 		return k;
 	}
+	
+ 	public int test(){
+ 	
+ 		return 0;
+ 	}
 }
 
 
-class B {
-
-	public int m(int k,boolean c, int j, int l){
-		return k;
+class B extends Fac {
+	int n;
+	int extd;
+	
+	//overrirde
+	public int m(int k){
+		return 99;
 	}
 	
+	//diff
 	public int z(){
 		return 5;
 	}

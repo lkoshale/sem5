@@ -19,6 +19,10 @@ public class Main {
          
          root.accept(new GJNoArguDepthFirst<Object>()); 
          
+         //recur for the extend
+         AddParents.setTable();
+         AddParents.Add();
+         
          //call Exten Algo
          
          //TODO generate the file

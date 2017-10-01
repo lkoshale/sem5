@@ -66,9 +66,10 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
 			return mth.Mvar.get(id);
 		}
 		
+		//TODO mth.cName is not always same as calling class name
 		//this is add of obj var
-		if(data.VarMap.contains(mth.cName+"$"+id)) {
-			int k = data.VarMap.indexOf(mth.cName+"$"+id);
+		if(data.VarMap.contains(cName+"$"+id)) {
+			int k = data.VarMap.indexOf(cName+"$"+id);
 			String rt = this.genTemp();
 			String out ="BEGIN \n";
 			out += "HLOAD "+rt+" TEMP 0 "+String.valueOf((k+1)*4);
@@ -452,8 +453,8 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
 			return _ret;
 		}
 		
-		if(data.VarMap.contains(mth.cName+"$"+id)) {
-			int k = data.VarMap.indexOf(mth.cName+"$"+id);
+		if(data.VarMap.contains(cName+"$"+id)) {
+			int k = data.VarMap.indexOf(cName+"$"+id);
 			String out ="";
 			out += "HSTORE "+" TEMP 0 "+String.valueOf((k+1)*4)+" "+val+"\n";
 			System.out.print(out);
