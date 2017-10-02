@@ -10,13 +10,21 @@ class Fac {
 	int diff;
 
     public int ComputeFac(int num){
-         B b ;
+         Fac b ;
          b = new B();
-	
+         
+        System.out.println( 1000000 );
+ 	
+ 	b = new C();       
+         
+         
+        System.out.println( b.test() );
+	System.out.println( b.m(7) );
+        
         return num ;
     }
     
-    public int m(int k){
+      public int m(int k){
 		return k;
 	}
 	
@@ -42,3 +50,20 @@ class B extends Fac {
 	}
 
 }
+
+
+class C extends B {
+	
+	int ll;
+	
+	public int m(int k){
+		return 5; 
+	}
+
+	public int xxx(){
+		return 88;
+	}
+}
+
+
+

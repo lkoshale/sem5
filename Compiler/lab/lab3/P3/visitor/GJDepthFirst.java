@@ -931,7 +931,11 @@ public class GJDepthFirst<R,A> implements GJVisitor<R,A> {
       
      
       if(this.msgTyp != null) {
-	      SymbolTable sym = STable.get(this.msgTyp);
+	      Data d1 = Table.get(this.msgTyp);
+	      Method m1 = d1.FnAr.get(this.msgTyp+"_"+n.f2.f0.tokenImage);
+	      
+    	  SymbolTable sym = STable.get(m1.cName);
+	      
 	      
 	      if(this.DBG )
 	    	  System.out.println("###"+this.msgTyp);
