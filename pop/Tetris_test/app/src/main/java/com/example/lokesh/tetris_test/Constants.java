@@ -7,6 +7,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 /**
  * Created by lokesh on 9/9/17.
@@ -29,6 +30,9 @@ public class Constants {
     public static int STROKE_COLOR;
 
 
+    public static String HIGH_SCORE = "highScore";
+    public static int HIGHSCORE = 0;
+
     public static final int LEFT = -100;
     public static final int RIGHT = 100;
 
@@ -42,11 +46,13 @@ public class Constants {
     public static List<Integer> COLORS = new ArrayList<>();
 
     public static void setCOLORS() {
-        COLORS.add(Color.BLUE);
-        COLORS.add(Color.GREEN);
-        COLORS.add(Color.MAGENTA);
-        COLORS.add(Color.CYAN);
-        COLORS.add(Color.YELLOW);
+        COLORS.add(Color.rgb(169, 26, 201));
+        COLORS.add(Color.rgb(96, 26, 201));
+        COLORS.add(Color.rgb(26, 201, 96));
+        COLORS.add(Color.rgb(136, 188, 24));
+        COLORS.add(Color.rgb(219, 19, 102));
+        COLORS.add(Color.rgb(255, 140, 40));
+
     }
 
     public static int getINT(){

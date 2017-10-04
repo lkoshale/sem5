@@ -3,9 +3,11 @@ package com.example.lokesh.tetris_test;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -13,6 +15,7 @@ import android.view.SurfaceView;
 import android.widget.Toast;
 
 import static com.example.lokesh.tetris_test.Constants.COL;
+import static com.example.lokesh.tetris_test.Constants.COLORS;
 import static com.example.lokesh.tetris_test.Constants.ROW;
 import static com.example.lokesh.tetris_test.Constants.getColor;
 import static com.example.lokesh.tetris_test.Constants.inComing;
@@ -51,6 +54,22 @@ public class TetrisGame extends SurfaceView implements Runnable {
     private boolean movement = false;
 
 
+    private int scoreX;
+    private int scoreY;
+
+    private int scoreXX;
+    private int scoreYY;
+
+    private Paint scorePaint;
+
+
+    private int bigRecL;
+    private int bigRecR;
+    private int bigRecU;
+    private int bigRecD;
+
+    private int HIGHSCORE;
+
 
     public TetrisGame(Context context) {
         super(context);
@@ -81,12 +100,42 @@ public class TetrisGame extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         paint = new Paint();
 
-         if(!full) {
+        if(!full) {
             state = new State(surfaceHolder, mX, mY);
         }
         else{
              state = new State(surfaceHolder, mX, mY,full);
         }
+
+        setBigBoxAndScore();
+
+    }
+
+
+    public void setBigBoxAndScore(){
+
+        Box b1 = state.getBox(1,Constants.COL-1);
+        Box b2 = state.getBox(3,Constants.COL-1);
+
+        scoreX = b1.getRight()+20;
+        scoreY = b1.getUp();
+
+        scoreXX = b2.getRight()+80;
+        scoreYY = b2.getUp();
+
+        scorePaint = new Paint();
+        scorePaint.setColor(Color.YELLOW);
+        scorePaint.setTextSize(60);
+
+        Box L = state.getBox(0,0);
+        Box R = state.getBox(0,Constants.COL-1);
+        Box B = state.getBox(Constants.ROW-1,0);
+
+        bigRecL = L.getLeft();
+        bigRecR = R.getRight();
+        bigRecD = B.getBottom()+1;
+        bigRecU = L.getUp();
+
     }
 
 
@@ -104,7 +153,7 @@ public class TetrisGame extends SurfaceView implements Runnable {
         if(playing && !Constants.gameOver){
 
             if(!inComing){
-                int k = 0;//Constants.getINT();
+                int k = Constants.getINT();
                 switch(k) {
                     case 0 : block = new Blocks.Iblock(state, Constants.getColor(),gameThread);
                         break;
@@ -217,7 +266,10 @@ public class TetrisGame extends SurfaceView implements Runnable {
             canvas.drawColor(Color.BLACK);
 
             paint.setColor(Color.RED);
+            paint.setStrokeWidth(1);
+            paint.setStyle(Paint.Style.STROKE);
 
+            canvas.drawRect(bigRecL,bigRecU,bigRecR,bigRecD,paint);
 
             for(Box b : state.mList) {
                 paint.setColor(b.getColor());
@@ -226,36 +278,40 @@ public class TetrisGame extends SurfaceView implements Runnable {
 
             }
 
-
-            //TODO make the scoring thing
-//            for(int i=0;i<Constants.ROW;i++){
-//
-//                for(int j=0;j<Constants.COL;j++){
-//
-//                    Box b = state.getBox(i,j);
-//
-//                }
-//
-//            }
-
+            paint.setColor(Color.RED);
+            paint.setStrokeWidth(1);
+            paint.setStyle(Paint.Style.STROKE);
+            canvas.drawRect(bigRecL,bigRecU,bigRecR,bigRecD,paint);
 
             // make the border
 
             for(Box b : state.mList) {
 
-              //  if(b.getColor() != Constants.DEFAULT_COLOR){
+                if(b.getColor() != Constants.DEFAULT_COLOR){
                     paint.setColor(Color.WHITE);
                     paint.setStrokeWidth(1);
                     paint.setStyle(Paint.Style.STROKE);
                     canvas.drawRect(b.getLeft(), b.getUp(), b.getRight(), b.getBottom(), paint);
-              //  }
+                }
 
 
               //  b.draw();
             }
 
+            scorePaint.setColor(Color.YELLOW);
+            canvas.drawText("SCORE IS :",scoreX,scoreY,scorePaint);
+            scorePaint.setTextSize(90);
+            canvas.drawText(String.valueOf(Constants.SCORE),scoreXX,scoreYY,scorePaint);
+            scorePaint.setTextSize(40);
+
+            scorePaint.setColor(Color.rgb(71, 239, 255));
+            canvas.drawText("HIGH SCORE : ",scoreX,scoreYY+150,scorePaint);
+            scorePaint.setTextSize(80);
+            canvas.drawText(String.valueOf(Constants.HIGHSCORE),scoreXX,scoreYY+280,scorePaint );
+            scorePaint.setTextSize(60);
 
             surfaceHolder.unlockCanvasAndPost(canvas);
+
         }
 
     }

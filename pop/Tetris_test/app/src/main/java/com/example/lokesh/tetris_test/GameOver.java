@@ -1,6 +1,8 @@
 package com.example.lokesh.tetris_test;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -18,6 +20,16 @@ public class GameOver extends AppCompatActivity {
 
         mainMenu = (Button)findViewById(R.id.mainMenu);
         TextView gameOver = (TextView)findViewById(R.id.text_game_over);
+
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        int HS = sharedPref.getInt(Constants.HIGH_SCORE,0);
+
+        if(Constants.SCORE > HS) {
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putInt(Constants.HIGH_SCORE, Constants.SCORE);
+            editor.commit();
+        }
 
         mainMenu.setOnClickListener(new View.OnClickListener() {
             @Override

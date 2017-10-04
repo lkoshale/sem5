@@ -1,8 +1,10 @@
 package com.example.lokesh.tetris_test;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,21 +47,21 @@ public class GameActivity extends AppCompatActivity {
         Point size = new Point();
         display.getSize(size);
 
-
-
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Constants.HIGHSCORE = sharedPref.getInt(Constants.HIGH_SCORE,0);
 
 
         if(!fullscreen) {
             setContentView(R.layout.activity_game);
             game = (TetrisGame) findViewById(R.id.surface);
-            game.intialize(GameActivity.this, 700, 1400,false);   //1080 1920
+            game.intialize(GameActivity.this, 750, 1500,false);   //1080 1920
 
 
             Left = (Button)findViewById(R.id.butoonLeft);
             Right = (Button)findViewById(R.id.buttonRight);
             Rotate = (Button)findViewById(R.id.butoonRot);
 
-            final TextView Score = (TextView)findViewById(R.id.text_score);
+
 
             Left.setOnClickListener(new View.OnClickListener() {
                 @Override
