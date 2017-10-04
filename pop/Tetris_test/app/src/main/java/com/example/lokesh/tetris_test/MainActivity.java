@@ -10,19 +10,31 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button Play ;
+    private Button Play ,FullScreenPlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Play = (Button)findViewById(R.id.buttonPlay);
+        FullScreenPlay = (Button)findViewById(R.id.play_full_screen);
 
         Play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Constants.gameOver = false;
                 Intent intent = new Intent(MainActivity.this,GameActivity.class);
+                intent.putExtra("FullScreen","false");
+                startActivity(intent);
+            }
+        });
+
+        FullScreenPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Constants.gameOver = false;
+                Intent intent = new Intent(MainActivity.this,GameActivity.class);
+                intent.putExtra("FullScreen","true");
                 startActivity(intent);
             }
         });

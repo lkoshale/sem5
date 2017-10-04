@@ -7,10 +7,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Stack;
 
 /**
  * Created by lokesh on 9/9/17.
  */
+
+
+
+//TODO there are bug in rotation mainly (unsolved is change of start and end row col as its rotated ) and lag in S rotation
 
 public class Blocks {
 
@@ -19,6 +24,7 @@ public class Blocks {
 
     public List<Box> set = new ArrayList<>();
     public Box MID;
+    public boolean setAvailable ;
 
     public int color;
     public int startRow;
@@ -31,16 +37,18 @@ public class Blocks {
 
     public long timer = 500;
 
-    public long oldtime;
-    public long newtime;
 
     public HashMap<Integer,Integer>map = new HashMap<>();
 
+    private Thread gameThread ;
 
-    public Blocks(State st,int colr) {
+
+    public Blocks(State st,int colr,Thread th) {
+        setAvailable = true;
         state =st;
         color = colr;
-        oldtime = System.currentTimeMillis();
+        this.gameThread = th;
+       // oldtime = System.currentTimeMillis();
        DefaultRel();
 
     }
@@ -55,17 +63,26 @@ public class Blocks {
 
     public void moveDown() {
 
-        newtime = System.currentTimeMillis();
+     //   newtime = System.currentTimeMillis();
 
-        if(endRow >= Constants.ROW -2 || reached ){
+        if(endRow >= Constants.ROW -1 || reached ){
             Constants.setInComing(false);
+            //pointCheck();
+            try {
+                gameThread.sleep(17);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+           int score = pointCheck();
+
+            Constants.SCORE += score;
+
             return;
         }
 
 
-        if( Math.abs(oldtime-newtime)> 500){
+        {
 
-            int s = set.size();
             List<Box> setDup = new ArrayList<>();
 
             for(Box bx : set){
@@ -80,6 +97,11 @@ public class Blocks {
 //                }
 
                 Box next =  state.getBox(r+1,c);
+
+                if(next==null) {
+                    reached = true;
+                    return;
+                }
 
                 if (set.contains(next)) {
                     next.isRep = true;
@@ -120,7 +142,7 @@ public class Blocks {
 
             Log.e("In down ",startRow+" "+endRow+" "+color);
 
-            oldtime = newtime;
+            //oldtime = newtime;
 
         }
 
@@ -132,6 +154,77 @@ public class Blocks {
 
         }else if (id == Constants.IBLOCK){
 
+            int i1 = this.MID.getPosR();
+            int j1 = this.MID.getPosC();
+
+            if(this.startCol==this.endCol) {
+
+                if (j1 - 2 < 0 || j1 + 1 > Constants.COL - 1)
+                    return;
+
+                for (Box bx : set) {
+                    bx.invalidate();
+                }
+
+
+                    Box b1 = state.getBox(i1, j1 - 2);
+                    b1.setColor(color);
+                    Box b2 = state.getBox(i1, j1 - 1);
+                    b2.setColor(color);
+                    Box b3 = state.getBox(i1, j1);
+                    b3.setColor(color);
+                    this.MID = b3;
+                    Box b4 = state.getBox(i1, j1 + 1);
+                    b4.setColor(color);
+
+                    set.clear();
+                    set.add(b1);
+                    set.add(b2);
+                    set.add(b3);
+                    set.add(b4);
+
+
+                this.startCol = j1 - 2;
+                this.endCol = j1 + 1;
+                this.startRow = i1;
+                this.endRow = i1;
+
+            }
+            else if(this.startRow == this.endRow){
+                if (i1+ 2 > Constants.ROW -1 || i1 - 1 < 0)
+                    return;
+
+                for (Box bx : set) {
+                    bx.invalidate();
+                }
+
+
+
+                    Box b1 = state.getBox(i1-1, j1);
+                    b1.setColor(color);
+                    Box b2 = state.getBox(i1+1, j1);
+                    b2.setColor(color);
+                    Box b3 = state.getBox(i1, j1);
+                    b3.setColor(color);
+                    this.MID = b3;
+                    Box b4 = state.getBox(i1+2, j1);
+                    b4.setColor(color);
+
+                    set.clear();
+                    set.add(b1);
+                    set.add(b2);
+                    set.add(b3);
+                    set.add(b4);
+
+
+
+                this.startCol = j1;
+                this.endCol = j1;
+                this.startRow = i1-2;
+                this.endRow = i1+1;
+
+
+            }
 
         }
         else{
@@ -139,15 +232,21 @@ public class Blocks {
             List<Box> setDup = new ArrayList<>();
             HashMap<Integer,Box> hashMap = makeMat(MID);
 
+            if(hashMap.size() < 9 || hashMap.isEmpty()){
+                return;
+            }
+
             for(int i=1;i<=9;i++){
-
-
 
                 Box b1 = hashMap.get(i);
 
                 if(i==5) {
                     setDup.add(b1);
                     continue;
+                }
+
+                for(Box bs : set){
+                    bs.isRep = false;
                 }
 
                 if (set.contains(b1)==true) {
@@ -183,6 +282,30 @@ public class Blocks {
 
             set.clear();
             set = setDup;
+
+
+            int mR = 1000;
+            int maxR =-1;
+            int mC = 1000;
+            int maxC =-1;
+
+            for(Box bx : set){
+
+                if(maxC<bx.getPosC()) maxC = bx.getPosC();
+
+                if(mC > bx.getPosC()) mC = bx.getPosC();
+
+                if (mR > bx.getPosR()) mR = bx.getPosR();
+
+                if (maxR < bx.getPosR()) maxR = bx.getPosR();
+
+            }
+
+            this.startRow = mR;
+            this.endRow = maxR;
+            this.startCol = mC;
+            this.endCol = maxC;
+
 
         }
 
@@ -255,8 +378,8 @@ public class Blocks {
 
     public static class Iblock extends Blocks {
 
-        public Iblock(State st,int colr){
-            super(st,colr);
+        public Iblock(State st,int colr,Thread th){
+            super(st,colr,th);
             setupBlock();
             id = Constants.IBLOCK;
         }
@@ -291,8 +414,8 @@ public class Blocks {
     }
 
     public static class Oblock extends Blocks {
-        public Oblock(State st,int colr){
-            super(st,colr);
+        public Oblock(State st,int colr,Thread th){
+            super(st,colr,th);
             id = Constants.OBLOCK;
             setupBlock();
 
@@ -329,8 +452,8 @@ public class Blocks {
     }
 
     public static class Jblock extends Blocks {
-        public Jblock(State st,int colr){
-            super(st,colr);
+        public Jblock(State st,int colr,Thread th){
+            super(st,colr,th);
             id = Constants.JBLOCK;
             setupBlock();
         }
@@ -366,8 +489,8 @@ public class Blocks {
     }
 
     public static class Lblock extends Blocks {
-        public Lblock(State st,int colr){
-            super(st,colr);
+        public Lblock(State st,int colr,Thread th){
+            super(st,colr,th);
             id = Constants.LBLOCK;
             setupBlock();
         }
@@ -402,8 +525,8 @@ public class Blocks {
     }
 
     public static class Sblock extends Blocks {
-        public Sblock(State st,int colr){
-            super(st,colr);
+        public Sblock(State st,int colr,Thread th){
+            super(st,colr,th);
             id = Constants.SBLOCK;
             setupBlock();
         }
@@ -438,8 +561,8 @@ public class Blocks {
     }
 
     public static class Zblock extends Blocks {
-        public Zblock(State st,int colr){
-            super(st,colr);
+        public Zblock(State st,int colr,Thread th){
+            super(st,colr,th);
             id = Constants.ZBLOCK;
             setupBlock();
         }
@@ -488,11 +611,21 @@ public class Blocks {
         int i = mid.getPosR();
         int j = mid.getPosC();
 
-        if(i-1 < 0 || i+1 > Constants.ROW-2)
+        if(i-1 < 0 || i+1 > Constants.ROW-1)
             return hashMap;
 
         if(j-1 < 0 || j+1 > Constants.COL-1)
             return hashMap;
+
+
+        for(int k=i-1;k<=i+1;k++){
+            for(int l =j-1;l<=j+1;l++) {
+                Box b = state.getBox(k, l);
+                if(b.isColored() && !set.contains(b)){
+                    return hashMap;
+                }
+            }
+        }
 
         int count = 1;
         for(int k=i-1;k<=i+1;k++){
@@ -506,6 +639,72 @@ public class Blocks {
         }
 
         return hashMap;
+    }
+
+
+    public int pointCheck(){
+
+        Stack<Integer> full = new Stack<>() ;
+
+        for(int i=0;i<Constants.ROW;i++){
+
+                boolean isColored = true;
+
+                for( int j=0;j<Constants.COL;j++){
+
+                    Box b = state.getBox(i,j);
+
+                    if(!b.isColored()){
+                        isColored = false;
+                        break;
+                    }
+
+                }
+
+                if (!isColored){
+                    continue;
+                }
+                else{
+                    full.push(i);
+                }
+        }
+
+        int size = full.size();
+        getDown(full);
+
+        return size;
+    }
+
+
+    public void getDown( Stack<Integer> S){
+
+        if(!S.empty()) {
+            int R = S.pop();
+
+            int curr = R ;
+            int cpy = R-1;
+
+            while( cpy >= 0) {
+
+                if( S.contains(cpy) ){
+                    cpy--;
+                    continue;
+                }
+
+                for (int j = 0; j < Constants.COL; j++) {
+                    Box b1 = state.getBox(cpy, j);
+                    Box b2 = state.getBox(curr, j);
+
+                    b2.setColor(b1.getColor());
+                    b1.invalidate();
+                }
+
+                curr--;
+                cpy--;
+            }
+
+        }
+
     }
 
 }

@@ -30,7 +30,7 @@ public class Fall {
             int i = b.getPosR();
             int j = b.getPosC();
 
-            if(i<Constants.ROW-2) {
+            if(i<Constants.ROW-1) {
                 int color = b.getColor();
                 b.setColor(Constants.DEFAULT_COLOR);
                 below = state.getBox(i + 1, j);

@@ -14,6 +14,8 @@ import java.util.Random;
 
 public class Constants {
 
+    public static int SCORE = 0;
+
     public static boolean inComing = false;
     public static boolean gameOver = false;
 

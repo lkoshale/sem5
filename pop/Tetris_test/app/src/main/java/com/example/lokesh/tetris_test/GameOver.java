@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class GameOver extends AppCompatActivity {
 
@@ -16,6 +17,7 @@ public class GameOver extends AppCompatActivity {
         setContentView(R.layout.activity_game_over);
 
         mainMenu = (Button)findViewById(R.id.mainMenu);
+        TextView gameOver = (TextView)findViewById(R.id.text_game_over);
 
         mainMenu.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -24,6 +26,8 @@ public class GameOver extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        gameOver.setText("YOUR SCORE : "+Constants.SCORE+"\n"+"\nGAME OVER");
 
     }
 }

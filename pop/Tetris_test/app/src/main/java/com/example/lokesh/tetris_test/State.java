@@ -27,14 +27,13 @@ public class State {
     private int Rsize;
     private int Csize;
 
-    private final int SIZE = COL*(ROW-1);
+    private final int SIZE = COL*(ROW);
 
     public List<Box> mList = new ArrayList<>();
 
 
 
-    public  State(Canvas canvas,SurfaceHolder surface,int X,int Y){
-        this.canvas = canvas;
+    public  State(SurfaceHolder surface,int X,int Y){
         this.surface = surface;
         this.mY = Y;
         this.mX = X;
@@ -44,6 +43,18 @@ public class State {
         getDim();
         makeGrid();
     }
+
+    public  State(SurfaceHolder surface,int X,int Y,boolean full){
+        this.surface = surface;
+        this.mY = Y;
+        this.mX = X;
+
+        getDim();
+        makeGrid();
+
+        Constants.ROW = Constants.ROW - 1;
+    }
+
 
     public void getDim(){
         Csize = (mX)/COL;
@@ -60,7 +71,7 @@ public class State {
         int l;
         int r ;
 
-        for(int j=0;j<ROW-1;j++) {
+        for(int j=0;j<ROW;j++) {
 
             l = 0;
             r = l+Csize;
@@ -70,15 +81,16 @@ public class State {
                 Box box = new Box(l, u, r, b,j,i);
                 // box.setColor(Color.YELLOW);
                 mList.add(box);
-                l = r + 1;
+                l = r ;  //+1
                 r = l + Csize;
             }
-            u = b + 1;
+            u = b ; //+1
             b = u + Rsize;
         }
 
     }
 
+    //r start from 0 anc c also
     public Box getBox(int r,int c){
         int k = r*COL + c ;
 

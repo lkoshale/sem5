@@ -5,12 +5,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.lokesh.tetris_test.MainActivity">
+    tools:context="com.example.lokesh.tetris_test.MainActivity"
+    android:orientation="vertical">
 
     <Button
         android:id="@+id/buttonPlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="PLAY"/>
+
+    <Button
+        android:id="@+id/play_full_screen"
+        android:text="PLAY FULL SCREEN"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

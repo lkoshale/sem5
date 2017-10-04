@@ -24,9 +24,11 @@ import static com.example.lokesh.tetris_test.Constants.inComing;
 public class TetrisGame extends SurfaceView implements Runnable {
 
 
+    public long oldTime = System.currentTimeMillis();
+    public long newTime ;
+
     //boolean variable to track if the game is playing or not
     boolean playing = false;
-    boolean firstTime ;
 
 
     public Context context;
@@ -46,6 +48,7 @@ public class TetrisGame extends SurfaceView implements Runnable {
     private Activity activity;
 
     private  Blocks block = null;
+    private boolean movement = false;
 
 
 
@@ -67,10 +70,9 @@ public class TetrisGame extends SurfaceView implements Runnable {
 
     }
 
-    public void intialize(Activity activity, int maxX, int maxY){
+    public void intialize(Activity activity, int maxX, int maxY,boolean full){
         Constants.inComing = false;
         this.activity = activity;
-        firstTime = true;
         playing = true;
         mY= maxY;
         mX = maxX;
@@ -79,12 +81,17 @@ public class TetrisGame extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         paint = new Paint();
 
-        state = new State(canvas,surfaceHolder,mX,mY);
-
+         if(!full) {
+            state = new State(surfaceHolder, mX, mY);
+        }
+        else{
+             state = new State(surfaceHolder, mX, mY,full);
+        }
     }
 
 
     public void play(){
+
 
         if(Constants.gameOver){
 //            Toast.makeText(context,"------GAME OVER------",Toast.LENGTH_LONG).show();
@@ -97,21 +104,21 @@ public class TetrisGame extends SurfaceView implements Runnable {
         if(playing && !Constants.gameOver){
 
             if(!inComing){
-                int k = Constants.getINT();
+                int k = 0;//Constants.getINT();
                 switch(k) {
-                    case 0 : block = new Blocks.Iblock(state, Constants.getColor());
+                    case 0 : block = new Blocks.Iblock(state, Constants.getColor(),gameThread);
                         break;
-                    case 1 :  block = new Blocks.Oblock(state, Constants.getColor());
+                    case 1 :  block = new Blocks.Oblock(state, Constants.getColor(),gameThread);
                         break;
-                    case 2: block = new Blocks.Jblock(state, Constants.getColor());
+                    case 2: block = new Blocks.Jblock(state, Constants.getColor(),gameThread);
                         break;
-                    case 3: block = new Blocks.Lblock(state, Constants.getColor());
+                    case 3: block = new Blocks.Lblock(state, Constants.getColor(),gameThread);
                         break;
-                    case 4: block = new Blocks.Sblock(state, Constants.getColor());
+                    case 4: block = new Blocks.Sblock(state, Constants.getColor(),gameThread);
                         break;
-                    case 5 : block = new Blocks.Zblock(state, Constants.getColor());
+                    case 5 : block = new Blocks.Zblock(state, Constants.getColor(),gameThread);
                         break;
-                    default: block = new Blocks.Zblock(state, Constants.getColor());
+                    default: block = new Blocks.Oblock(state, Constants.getColor(),gameThread);
                         Log.e("inavlid block ID :"," id = "+k);
                 }
 
@@ -121,7 +128,14 @@ public class TetrisGame extends SurfaceView implements Runnable {
             else{
 
                 if(block != null) {
-                    block.moveDown();
+
+                    newTime = System.currentTimeMillis();
+
+                    if(!movement && ( newTime - oldTime >= 700) ) {
+                        block.moveDown();
+                        oldTime = newTime;
+                    }
+
                 }
                 else
                     Log.e("Block is null","inside play");
@@ -140,11 +154,6 @@ public class TetrisGame extends SurfaceView implements Runnable {
 
         while(playing){
 
-//            if(firstTime)
-//                initMap();
-//            else
-
-
                 update();
 
                 draw();
@@ -158,48 +167,53 @@ public class TetrisGame extends SurfaceView implements Runnable {
 
     public void singleTap(){
         if (block!=null){
+            movement = true;
             block.rotate();
+            movement = false;
         }
     }
 
     public void swipedLeft(){
-        if(block!=null)
+        if(block!=null){
+            movement = true;
             block.moveLR(Constants.LEFT);
+            movement = false;
+        }
     }
 
     public void swipedRight(){
-        if(block!=null)
+        if(block!=null) {
+            movement = true;
             block.moveLR(Constants.RIGHT);
+            movement = false;
+        }
     }
 
     public void swipedBottom(){
+        movement = true;
+        block.moveDown();
+        movement = false;
 
     }
 
 
     private void update() {
 
-//        int size =( ROW-1)*COL;
-//
-//        Box t = state.getBox(ROW-2,COL-1);
-//
-//        if(t!=null){
-//            t.setColor(Constants.getColor());
-//        }
-
-  //       iblock.moveDown();
-
-        play();
-
+    //play();
 
     }
 
     private void draw() {
 
 
+
         if (surfaceHolder.getSurface().isValid()) {
 
             canvas = surfaceHolder.lockCanvas();
+
+            play();
+
+
             canvas.drawColor(Color.BLACK);
 
             paint.setColor(Color.RED);
@@ -213,16 +227,28 @@ public class TetrisGame extends SurfaceView implements Runnable {
             }
 
 
+            //TODO make the scoring thing
+//            for(int i=0;i<Constants.ROW;i++){
+//
+//                for(int j=0;j<Constants.COL;j++){
+//
+//                    Box b = state.getBox(i,j);
+//
+//                }
+//
+//            }
+
+
             // make the border
 
             for(Box b : state.mList) {
 
-                if(b.getColor() != Constants.DEFAULT_COLOR){
+              //  if(b.getColor() != Constants.DEFAULT_COLOR){
                     paint.setColor(Color.WHITE);
                     paint.setStrokeWidth(1);
                     paint.setStyle(Paint.Style.STROKE);
                     canvas.drawRect(b.getLeft(), b.getUp(), b.getRight(), b.getBottom(), paint);
-                }
+              //  }
 
 
               //  b.draw();
@@ -236,7 +262,7 @@ public class TetrisGame extends SurfaceView implements Runnable {
 
     private void control() {
         try {
-            gameThread.sleep(100);
+            gameThread.sleep(17);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -286,15 +312,15 @@ public class TetrisGame extends SurfaceView implements Runnable {
         if(surfaceHolder.getSurface().isValid()) {
 
             canvas = surfaceHolder.lockCanvas();
-//            mX = canvas.getHeight();
-//            mY = canvas.getWidth();
+            mX = canvas.getHeight();
+          mY = canvas.getWidth();
 
             Log.e("Canvas hieght width:",mX+" "+mY+" comp "+canvas.getHeight()+" "+canvas.getWidth());
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
 
-        firstTime = false;
-    }
+
+  }
 
 
 }

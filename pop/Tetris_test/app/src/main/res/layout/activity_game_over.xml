@@ -8,6 +8,7 @@
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/text_game_over"
         android:layout_weight="1"
         android:gravity="center"
         android:layout_width="match_parent"
