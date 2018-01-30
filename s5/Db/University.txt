@@ -1,0 +1,23 @@
+	
+create table student ( rollNo char(8) not null, name varchar(15) not null,degree char(5), year smallint, sex char not null, deptNo smallint,advisor int, primary key(rollNo), foreign key( deptNo) references department( deptId) on delete set null on update cascade,foreign key(advisor) references professor( empId) on delete set null on update cascade);
+
+
+create table department ( deptId smallint, name varchar(15),hod int,phone int, primary key( deptId));
+
+
+create table professor ( empId int not null, name varchar(15), sex char not null, startYear int, deptNo smallint ,phone int , primary key( empId) ,foreign key( deptNo) references department( deptId) on delete set null on update cascade );
+
+create table course ( courseId char(6) not null, cname varchar(20), credits int not null, deptNo smallint, primary key(courseId), foreign key(deptNo) references department( deptId) on delete set null on update cascade );
+
+create table enrollment ( rollNo char(8) not  null, courseId char(6) not null,sem char(4) not null,year int not null,grade char, primary key( rollNo,courseId,sem,year ),foreign key(rollNo) references student(rollNo) ,foreign key(courseId) references course(courseId) );
+
+
+create table teaching ( empId int not null,courseId char(6) not null,sem char(4) not null,year int not null, classRoom varchar(10), primary key(empId,courseId,sem,year) , foreign key(empId) references professor( empId) ); 
+
+create table preRequisite( preReqCourse char(6) , courseID char(6), primary key( preReqCourse,courseID), foreign key(preReqCourse) references course(courseId), foreign key(courseID) references course(courseId) );
+
+
+INSERT INTO department (deptId, name,hod,phone ) VALUES (1,'CS',120,25689) ;
+
+INSERT INTO professor (empId,name,sex,startYear,deptNo,phone) VALUES (254,'Mani','M',2005,5,21569 );
+

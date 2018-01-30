@@ -1,0 +1,38 @@
+3. select E.rollNo from enrollment E,teaching TH  where E.courseId = TH.courseId and TH.empId <> ANY ( select T.empID  from teaching T where T.courseId = 319 );
+
+
+5. select S.name ,S.rollNo from student S, enrollment E where S.rollNo = E.rollNo and EXISTS( select E2.courseId from enrollment E2 where S.rollNo = E2.rollNo and E.year <> E2.year and E.courseId = E2.courseId);
+
+
+
+x select e.rollNo from enrollment e where 'S' = ALL( select E.grade from enrollment E where E.courseId IN ( select P.preReqCourse from prerequisite P where P.courseId = 760) and e.rollNo = E.rollNo  );
+
+
+6.select P.empId from professor P where P.startYear <= ALL ( select H.startYear from professor H , department D where D.hod = H.empId) and EXISTS ( select deptId from department where P.empId = hod);
+
+1.select distinct S.rollNo,S.name from student S , enrollment E where S.rollNo = E.rollNo and E.courseId IN ( select T.courseId from teaching T where T.empId = S.advisor); 
+
+
+7.select count(  E.rollNo) from enrollment E, student S, department D where S.rollNo = E.rollNo and E.sem = 'even' and E.year = 2004 and D.name = 'Comp. Sci.' and S.deptNo = D.deptId ;
+
+2.select C.cname ,C.courseId from course C where C.courseId IN ( select P.preReqCourse  from prerequisite P where P.courseId IN (select M.preReqCourse from prerequisite M where M.courseId = 608 ) OR P.courseId = 608 );
+
+
+
+8. select P.empId , T.courseId from professor P , teaching T , department D where D.name = 'Biology' and D.deptId = P.deptNo and T.empId = P.empId and P.startYear <= ALL (select B.startYear from professor B where B.deptNo = D.deptId ) ;
+
+
+9. select D.name, C.courseId from course C , department D where D.deptId = C.deptNo and ( select count(R.preReqCourse)  from prerequisite R where R.courseId = C.courseId ) >= ALL ( select count(P.preReqCourse) from course c1 , prerequisite P where P.courseId = c1.courseId and c1.deptNo = D.deptId  group by c1.courseId ) and EXISTS ( select M.preReqCourse from prerequisite M  where M.courseId = C.courseId);
+
+
+
+SELECT S.stationNo FROM station as S WHERE
+EXISTS ( select R.stationNo from routeStation as R where R.trainNo =
+18203 AND R.stationNo = S.statioNo)
+
+
+ 
+
+
+
+

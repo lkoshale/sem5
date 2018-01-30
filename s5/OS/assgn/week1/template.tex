@@ -1,0 +1,190 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+
+
+\title{OS kernel analysis : scheduler }
+
+\author{CS15B049, Lokesh Koshale}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Complete Fair Scheduling}
+
+\subsection{The Periodic Tick }
+vruntime is used to track the virtual runtime of runnable tasks in CFS' redblack-tree. The \textbf{scheduler\_tick()} function of the scheduler skeleton regularly calls the \textbf{task\_tick()} hook into CFS. This hook internally calls \textbf{task\_tick\_fair()} which is the entry point into the CFS task update :
+\begin{verbatim}
+/*
+ * scheduler tick hitting a task of our scheduling class:
+ */
+static void task_tick_fair(struct rq *rq, struct task_struct *curr, int queued)
+{
+	struct cfs_rq *cfs_rq;
+	struct sched_entity *se = &curr->se;
+
+	for_each_sched_entity(se) {
+		cfs_rq = cfs_rq_of(se);
+		entity_tick(cfs_rq, se, queued);
+	}
+
+	if (numabalancing_enabled)
+		task_tick_numa(rq, curr);
+
+	update_rq_runnable_avg(rq, 1);
+}
+\end{verbatim}
+\textbf{task\_tick\_fair()} calls \textbf{entity\_tick()} for the tasks scheduling entity and corresponding runqueue.\\
+The statistics updated using \textbf{update\_curr}. If the \textbf{nr\_running} counter ofthe queue indicates that fewer than two processes are runnable on the queue, nothing needs to be done.If a process is supposed to be preempted, there needs to be at least another one that could preempt it. Otherwise, the decision is left to \textbf{check\_preempt\_tick}.
+\begin{verbatim}
+/*
+ * Preempt the current task with a newly woken task if needed:
+ */
+static void
+check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr)
+{
+	unsigned long ideal_runtime, delta_exec;
+	struct sched_entity *se;
+	s64 delta;
+
+	ideal_runtime = sched_slice(cfs_rq, curr);
+	delta_exec = curr->sum_exec_runtime - curr->prev_sum_exec_runtime;
+	if (delta_exec > ideal_runtime) {
+		resched_curr(rq_of(cfs_rq));
+		/*
+		 * The current task ran long enough, ensure it doesn't get
+		 * re-elected due to buddy favours.
+		 */
+		clear_buddies(cfs_rq, curr);
+		return;
+	}
+\end{verbatim}
+
+ The purpose of the function is to ensure that no process runs longer than specified by its share of
+the latency period. This length of this share in real-time is computed in \textbf{sched\_slice}, and the realtime interval during which the process has been running on the CPU is given by \textbf{sum\_exec\_runtime - prev\_sum\_exec\_runtime }.
+
+\subsection{Wake-up Preemption}
+When tasks are woken up in \textbf{try\_to\_wake\_up} and \textbf{wake\_up\_new\_task} , the kernel uses
+\textbf{check\_preempt\_curr} to see if the new task can preempt the currently running one. For completely fair handled tasks, the function \textbf{check\_preempt\_wakeup} performs the desired check.
+\begin{verbatim}
+/*
+ * Preempt the current task with a newly woken task if needed:
+ */
+static void check_preempt_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+{
+	struct task_struct *curr = rq->curr;
+	struct sched_entity *se = &curr->se, *pse = &p->se;
+	struct cfs_rq *cfs_rq = task_cfs_rq(curr);
+	int scale = cfs_rq->nr_running >= sched_nr_latency;
+	int next_buddy_marked = 0;
+    .........
+    .........
+}
+\end{verbatim}
+
+The newly woken task need not necessarily be handled by the completely fair scheduler. If the new task is a real-time task, rescheduling is immediately requested because real-time tasks always preempt CFS tasks.
+
+\section{Real Time Scheduling Class}
+
+\label{sec:real time schdeuling}
+
+Each process or Thread in system has associated scheduling policy and a static scheduling priority, sched\_priority. The Process or Thread that has higher static scheduling priority ( from 0-99  ) are handled by real time scheduling class of the scheduler.\\ 
+The static\_prio has the static priority of the process and the rt\_task macro defines wheather the process is real time or not and task\_has\_rt\_policy checks if the process is associated with a real-time scheduling policy.
+
+\subsection{Introduction}
+Real Time process differ from normal process in a essential way that if a Real time process exist in the system it will always be selected first unless there is another real time process with higher priority.\\
+\\
+There are two scheduling policies for real time processes :
+\subsubsection{First In First Out (SCHED\_FIFO)}
+In this policy the task which come first will be executed first and will be kept running till its end until it yields by calling sched\_yield() or blocked for an I/O operation or some higher priority task preempts it.\\ \\
+It follows the following rules:\\ \\
+\hspace*{5mm}1. A SCHED\_FIFO thread that has been preempted by another thread of
+          higher priority will stay at the head of the list for its priority
+          and will resume execution as soon as all threads of higher
+          priority are blocked again.\\ \\
+\hspace*{5mm}2. When a SCHED\_FIFO thread becomes runnable, it will be inserted at the end of the list for its priority\\ \\
+\hspace*{5mm}3.A thread calling sched\_yield() will be put at the end of the
+          list.
+\\
+\subsubsection{Round Robin Policy (SCHED\_RR) }
+A process or task in round robin scheduling have a time slice whose value is reduced when they run if they are normal processes.Once all time quantums have expired, the value is reset to the initial value,but the process is placed at the end of the queue. This ensures that if there are several SCHED\_RR processes with the same priority, they are always executed in turn.
+    
+
+\subsection{Underlying Data structure}
+The scheduling class for real-time tasks is defined in \textbf{rt.c} inside the sched folder in the kernel directory of boss-mool linux.\\ \\
+Mostly there are analogs for the basic scheduling data structure but the implementations are much simpler then Complete Fair scheduling.\\
+it is as follows :
+\begin{verbatim}
+const struct sched_class rt_sched_class = {
+	.next			= &fair_sched_class,
+	.enqueue_task		= enqueue_task_rt,
+	.dequeue_task		= dequeue_task_rt,
+	.yield_task		= yield_task_rt,
+
+	.check_preempt_curr	= check_preempt_curr_rt,
+
+	.pick_next_task		= pick_next_task_rt,
+	.put_prev_task		= put_prev_task_rt,
+	
+	.set_curr_task          = set_curr_task_rt,
+	.task_tick		= task_tick_rt,
+
+	.get_rr_interval	= get_rr_interval_rt,
+
+	.prio_changed		= prio_changed_rt,
+	.switched_to		= switched_to_rt,
+
+	.update_curr		= update_curr_rt,
+};
+
+\end{verbatim}
+The analog of \textbf{ update\_cur} for the real-time scheduler class is \textbf{update\_curr\_rt}. The function keeps track of the time the current process spent executing on the CPU in \textbf{sum\_exec\_runtime}. All calculations are performed with real times; virtual times are not required\\
+In \textbf{rt\_sched} the core run queue \textbf{rt\_rq} defined in sched.h file also have sub run queue instance.\\
+\begin{verbatim}
+struct rt_rq {
+	struct rt_prio_array active;
+	unsigned int rt_nr_running;
+	......
+	struct rq *rq;
+	struct task_group *tg;
+}
+\end{verbatim}
+
+The run queue is very simple here just a Linked list.\\ \\
+All real-time tasks with the same priority are kept in a linked list headed by \textbf{active.queue[prio]}, and the bitmap active.bitmap signals in which list tasks are present by a set bit. If no tasks are on the list,the bit is not set.\\
+structured as below : (decalred in sched.h file )
+\begin{verbatim}
+/*
+ * This is the priority-queue data structure of the RT scheduling class:
+ */
+struct rt_prio_array {
+	DECLARE_BITMAP(bitmap, MAX_RT_PRIO+1); /* include 1 bit for delimiter */
+	struct list_head queue[MAX_RT_PRIO];
+};
+\end{verbatim}
+
+\subsection{Operation And Features}
+\begin{itemize}
+\item Enqueue and Dequeue : \\The task is placed or removed from  appropriate
+list selected by \textbf{$array->queue + p->prio$}, and the corresponding bit in the bitmap is set if at least one task is present, or removed if no tasks are left on the queue.
+\item Picking Next Task : \\ \textbf{pick\_next\_task\_rt} handles selection of the next task first with \textbf{sched\_find\_first\_bit} is a standard function that finds the first set bit in \textbf{active.bitmap} and this means that higher real-time priorities are handled before lower realtime priorities.The first task on the selected list is taken out, and \textbf{se.exec\_start} is set to the current real-time clock value of the run queue.
+\item Converting to Real time process :\\
+\textbf{sched\_setscheduler} system call is used to convert a normal process to a Real Time process it  removes the process from its current queue using \textbf{deactivate\_task} and sets real time priority for it in the scheduling class data structure and then re-activates the task.
+\end{itemize}
+
+\newpage
+
+\begin{thebibliography}{9}
+\bibitem{nano3}
+  K. Grove-Rasmussen og Jesper Nygård,
+  \emph{Kvantefænomener i Nanosystemer}.
+  Niels Bohr Institute \& Nano-Science Center, Københavns Universitet
+
+\end{thebibliography}
+\end{document}

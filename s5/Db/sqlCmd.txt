@@ -1,0 +1,25 @@
+
+start mysql :
+	
+	mysql -u root -p  
+				(password propt check for capslock)
+
+
+sql db commands -->
+
+ creating new database 
+ 
+	CREATE DATABASE <db name> ;
+	
+use the database --
+	USE <db name> ;
+
+show all db present --
+	SHOW DATABASES ;
+
+see table in a database--
+	
+	SHOW TABLES ;
+	
+
+

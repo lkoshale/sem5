@@ -1,0 +1,19 @@
+
+1: SELECT distinct(T.trainNo) FROM train as T, scheduleDay as D WHERE T.source = "NDL" AND T.dest = "MAS" AND D.day = "WED" ;
+
+
+2:SELECT S.stationNo FROM station as S WHERE 
+S.stationNo IN ( select R.stationNo from routeStation as R where R.trainNo = 18203 ) 
+AND S.stationNo IN ( select R.stationNo from routeStation as R where R.trainNo = 14690 ) 
+AND S.stationNo IN ( select R.stationNo from routeStation as R where R.trainNo = 12056 ) ;
+
+
+3: SELECT C.name FROM customer as C, fare as F WHERE F.trainNo=12058 AND F.pnrNo = C.pnrNo;
+
+
+4: SELECT MAX( C.noOfSeats ) FROM compartment as C ,train as T WHERE C.trainNo = T.trainNo AND T.trainNo IN ( SELECT TR.trainNo FROM train as TR WHERE( select COUNT(CP.compartmentNo) from compartment as CP where CP.trainNo = TR.trainNo ) >= ALL( select COUNT(CP.compartmentNo) from compartment as CP , train as TRN where CP.trainNo = TRN.trainNo group by TRN.trainNo ) ) ;
+
+5: SELECT AVG( F.amount ) FROM fare as F WHERE F.trainNo = 16508;
+
+
+6: SELECT COUNT( B.berthNo ) FROM Berth as B, compartment as C WHERE C.trainNo = 16508 AND B.compartmentNO = C.compartmentNo AND B.isReserved = 'N';
