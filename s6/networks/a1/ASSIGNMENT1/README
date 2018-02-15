@@ -1,0 +1,26 @@
+Compilation  : make all
+Delete executables : make clean
+
+
+Ruuning Server : ./emailserver <PORT>
+<PORT> can be any integer from 1025 to 65535  (0-1024 are system reserved) 
+mostly port number from 8000 are for html connection
+so we can use any port number from 8000-9000
+
+ex: ./emailserver 8080
+
+Running Client :  ./emailclient  <PORT>
+client port number should be same as server port number
+
+ex :  ./emailclient 8080
+
+For testing :
+run server and client in two different terminals as two different processes
+
+only client will have the input interface , from client shell prompt give valid commands
+as mentioned in the probelm , and it will show the servers response
+
+if there is invvalid command the client will  give error and prompt again
+
+for closing the emailclient use command QUIT
+while for closing the sever use CTRL+C  (CTRL+Z stops the program but the scoket is released after 5 mins)
