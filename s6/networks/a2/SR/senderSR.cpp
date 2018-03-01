@@ -33,7 +33,8 @@ struct sockaddr_in address;
 
 ///////////////////////
 
-queue < unsigned char* >BUFFER;
+queue < unsigned char* >BUFFER;   //for packets
+queue < struct timespec > genTime;   //for storing time when they generated
 bool endF  = false;
 pthread_mutex_t lock;
 
@@ -44,6 +45,9 @@ pthread_mutex_t ack_lock;
 vector<unsigned char* > SENDER_WINDOW;
 
 vector < struct timespec > StartTime;
+
+vector<int>attemptNo;
+pthread_mutex_t attempt_lock;
 /////////////////////////
 
 void Error(string cause ){
@@ -55,6 +59,32 @@ void Error(string cause ){
 float get_RTT_AVE(){
 	return RTT_SUM/PACK_SENT ;
 }
+
+void setInput( const char* arg, const char* val ){
+	if(strcmp(arg,"-d")==0)
+		DEBUG = true;
+	else if(strcmp(arg,"-s")==0)
+		IPADDRS = val;
+	else if(strcmp(arg,"-p")==0)
+		PORT = atoi(val);
+	else if(strcmp(arg,"-n")==0)
+		SNF = atoi(val);
+	else if(strcmp(arg,"-L")==0)
+		MAX_PACKET_LEN = atoi(val);
+	else if(strcmp(arg,"-R")==0)
+		PACKET_GEN_RATE = atoi(val);
+	else if(strcmp(arg,"-N")==0)
+		MAX_PACKETS = atoi(val);
+	else if(strcmp(arg,"-W")==0)
+		WINDOW_SIZE = atoi(val);
+	else if(strcmp(arg,"-B")==0)
+		BUFFER_SIZE = atoi(val);
+	else
+		Error("Invalid command line argument ");
+
+}
+
+
 
 //geneartes packets based on rate in different thread
 void* genratePacket(void* args){
@@ -71,9 +101,12 @@ void* genratePacket(void* args){
 	 	unsigned char* packet = (unsigned char*) malloc(sizeof(unsigned)*MAX_PACKET_LEN);
 	 	if(BUFFER.size() < BUFFER_SIZE ){
 	 		packet[0] = count % WINDOW_SIZE;
-	
+			struct timespec start;
+
+			clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
 	 		pthread_mutex_lock(&lock);
 	 			BUFFER.push(packet);
+	 			genTime.push(start);
 	 		pthread_mutex_unlock(&lock);
 	 		count++;
 	 		//sleep
@@ -115,7 +148,13 @@ void* recive_ACK_fn(void* args){
      	RTT_SUM+=result;
       PACK_SENT++;
 
-      cout<<"ack "<<seqNo<<" -- "<<result<<" "<<PACK_SENT<<"\n";
+      if(DEBUG)
+      	cout<<"Seq# "<<seqNo<<" Time Generated : "<< start.tv_sec*1e6 + start.tv_nsec/1e3 <<" RTT : "<<result<<" Num of attempts: "<<attemptNo[seqNo]<<"\n";
+
+      pthread_mutex_lock(&attempt_lock);
+      	attemptNo[seqNo]=0;
+      pthread_mutex_unlock(&attempt_lock);
+
 	}
 
 }
@@ -137,7 +176,6 @@ vector<int> check_miss(){
 
 void resend_packets(vector<int>misedPack){
 	vector<int>misPack(misedPack);
-	vector<int>attemptNo(WINDOW_SIZE,1);
 
 	while(misPack.size()>0){
 
@@ -183,43 +221,30 @@ void resend_packets(vector<int>misedPack){
 
 int main(int argc, char const *argv[]) {
 
-	if(argc == 18){
-		DEBUG = true;
-		IPADDRS = argv[3];
-		PORT = atoi(argv[5]);
-		SNF=atoi(argv[7]);
-		MAX_PACKET_LEN = atoi(argv[9]);
-		PACKET_GEN_RATE = atoi(argv[11]);
-		MAX_PACKETS = atoi(argv[13]);
-		WINDOW_SIZE = atoi(argv[15]);
-		BUFFER_SIZE = atoi(argv[17]);
-	}
-	else if(argc==17){
-		DEBUG = false;
-		IPADDRS = argv[2];
-		PORT = atoi(argv[4]);
-		SNF=atoi(argv[6]);
-		MAX_PACKET_LEN = atoi(argv[8]);
-		PACKET_GEN_RATE = atoi(argv[10]);
-		MAX_PACKETS = atoi(argv[12]);
-		WINDOW_SIZE = atoi(argv[14]);
-		BUFFER_SIZE = atoi(argv[16]);
-	}
-	else if(argc==1){
-		DEBUG = false;
-		IPADDRS = "127.0.0.1";
-  	PORT = 8080;
-  	SNF = 4;
-  	MAX_PACKET_LEN = 256 ;
-  	PACKET_GEN_RATE = 20;
-  	MAX_PACKETS = 100;
-  	WINDOW_SIZE = 10 ;			//Max WS = 2^(SNF-1)
-  	BUFFER_SIZE = 100;
+	
+	DEBUG = false;
+	IPADDRS = "127.0.0.1";
+	PORT = 8080; 							//default port
+	SNF = 4;
+	MAX_PACKET_LEN = 256 ;
+	PACKET_GEN_RATE = 20;
+	MAX_PACKETS = 100;
+	WINDOW_SIZE = 10 ;			//Max WS = 2^(SNF-1)
+	BUFFER_SIZE = 100;
 
-  }else{
-    printf("please provide a PORT no in command line\n");
-    exit(0);
-  }
+
+	//debug always the first arg -d
+	if(argc%2==0 && argc > 1){
+		setInput(argv[1],NULL);
+		for(int i=2;i<argc;i+=2){
+			setInput(argv[i],argv[i+1]);
+		}
+	}
+	else if(argc>1){
+		for(int i=1;i<argc;i+=2){
+			setInput(argv[i],argv[i+1]);
+		}
+	}
 
   //initailize global var
   RTT_SUM = 0 ; 
@@ -230,9 +255,11 @@ int main(int argc, char const *argv[]) {
 
   	SENDER_WINDOW.push_back(temp);
   	SenderWindowACK.push_back(-1);
+  	attemptNo.push_back(0);
 
   	struct timespec tm;
   	StartTime.push_back(tm);
+
   } 
 
 
@@ -272,10 +299,13 @@ int main(int argc, char const *argv[]) {
   		//get next packet in queue
   		bool con = false;
   		unsigned char* packet = NULL;
+  		struct timespec start;
   		pthread_mutex_lock(&lock);
   		if(!BUFFER.empty()){
 	 			packet =	BUFFER.front();
 	 			BUFFER.pop();
+	 			start = genTime.front();
+	 			genTime.pop();
 	 		}
 	 		else{
 	 			con = true;
@@ -288,12 +318,16 @@ int main(int argc, char const *argv[]) {
 	 		//store packet and its time
 	 		int seqNo = (int)packet[0];
 	 		SENDER_WINDOW[seqNo]= packet;
-	 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[seqNo]);
+	 		StartTime[seqNo] = start;
+	 		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[seqNo]);
 
     	if(sendto(sockfd,packet,MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
         Error("send error");
 
       UNACK_PACK_COUNT++;
+      pthread_mutex_lock(&attempt_lock);
+      attemptNo[seqNo]+=1;
+     	pthread_mutex_unlock(&attempt_lock);
 
     }
 
