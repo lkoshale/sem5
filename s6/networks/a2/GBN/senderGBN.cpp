@@ -15,6 +15,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <iomanip>
 
 
 using namespace std;
@@ -44,14 +45,15 @@ pthread_mutex_t lock;
 // pthread_mutex_t ack_lock;
 
 queue<unsigned char* > SENDER_WINDOW;
+pthread_mutex_t window_lock; 
 
 queue < struct timespec > StartTime;
 pthread_mutex_t time_lock;
 
-vector<int>attemptNo;
-pthread_mutex_t attempt_lock;       //TODO require a single num maybe
+queue<int>attemptNo;
+pthread_mutex_t at_lock;     //TODO require a single num maybe
 /////////////////////////
-
+int trasmtNo;
 
 void Error(string cause ){
   string er = "ERROR : "+cause+" : ";
@@ -62,6 +64,7 @@ void Error(string cause ){
 float get_RTT_AVE(){
   return RTT_SUM/PACK_SENT ;
 }
+
 
 void setInput( const char* arg, const char* val ){
   if(strcmp(arg,"-d")==0)
@@ -145,19 +148,26 @@ void* recive_ACK_fn(void* args){
       double result = (stop.tv_sec - start.tv_sec) * 1e6 + (stop.tv_nsec - start.tv_nsec) / 1e3;    // in microseconds
 
       RTT_SUM+=result;
-      PACK_SENT++;
-
-      if(DEBUG)
-        cout<<"Seq# "<<seqNo<<" Time Generated : "<< start.tv_sec*1e6 + start.tv_nsec/1e3 <<" RTT : "<<result<<" Num of attempts: "<<attemptNo[seqNo]<<"\n";
-
-      pthread_mutex_lock(&attempt_lock);
-        SENDER_WINDOW.pop();                //ack are never lost  // commulative ack
-        attemptNo[seqNo]=0;
-      pthread_mutex_unlock(&attempt_lock);
 
       pthread_mutex_lock(&time_lock);
       StartTime.pop();
+      int at = attemptNo.front();
+      attemptNo.pop();
       pthread_mutex_unlock(&time_lock);
+    
+      pthread_mutex_lock(&window_lock);
+        SENDER_WINDOW.pop();                //ack are never lost  // commulative ack
+        PACK_SENT++;
+      pthread_mutex_unlock(&window_lock);
+
+      double sTime = start.tv_sec*1e6 + start.tv_nsec/1e3 ;  //in micro sec
+      char tstr[10];
+      sprintf(tstr,"%d",(int)sTime % 1000);
+      tstr[2]='\0';
+
+      if(DEBUG)
+        cout<<fixed<<setprecision(2)<<"Seq# "<<seqNo<<" Time Generated : "<< (int)(sTime/1000) << ":"<< tstr <<"  RTT : "<<result/1000<<"  Num of attempts: "<<at<<"\n";
+
 
   }
 
@@ -166,57 +176,97 @@ void* recive_ACK_fn(void* args){
 void resend_packets(){
   //wait then resend the top packet of window
 
+  struct timespec stop,start;
+  int curAT;
+  pthread_mutex_lock(&time_lock);
+    start = StartTime.front();
+    curAT = attemptNo.front();
+  pthread_mutex_unlock(&time_lock);
+
+  if(curAT > 10 )
+    Error("maximum attempt for re transmitting packet exceeded");
+
+  pthread_mutex_lock(&window_lock);
+    int SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
+    int p_sent = PACK_SENT;
+  pthread_mutex_unlock(&window_lock);
+
+
+  //wait for packet
   while(true){
-    struct timespec stop,start;
-    unsigned char* packet;
-
-    pthread_mutex_lock(&attempt_lock);
-      int SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
-      packet = SENDER_WINDOW.front();
-    pthread_mutex_unlock(&attempt_lock);
-
+    
     if(SENDER_WINDOW_SIZE < WINDOW_SIZE)
       return;
-
-
-    pthread_mutex_lock(&time_lock);
-      start = StartTime.front();
-    pthread_mutex_unlock(&time_lock);
-    
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
     double msec = (stop.tv_sec - start.tv_sec) * 1e6 + (stop.tv_nsec - start.tv_nsec) / 1e3;    // in microseconds
 
 
     int time_limit ;
-    if(PACK_SENT <= 10)
+    if(p_sent <= 10)
       time_limit = 100000; //100 milli sec
     else
       time_limit = 2*get_RTT_AVE();
 
-    if(msec > time_limit ){
+    if(msec > time_limit )
+      break;
 
-      struct timespec start2;
+    pthread_mutex_lock(&window_lock);
+      SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
+    pthread_mutex_unlock(&window_lock);
 
-      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start2);
-      if(sendto(sockfd,packet,MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
-       Error("send error");
+  }
 
-      //update time val
-      queue< struct timespec> tempQ(StartTime);
-      tempQ.pop();
-      pthread_mutex_lock(&time_lock);
-      while(!StartTime.empty()){
-        StartTime.pop();
-      }
-      StartTime.push(start2);
-      while(!tempQ.empty()){
-        StartTime.push(tempQ.front());
-        tempQ.pop();
-      }
-      pthread_mutex_unlock(&time_lock);
-    
+  queue< struct timespec> tempQ(StartTime);
+  queue< int> tempAT(attemptNo);
+
+  pthread_mutex_lock(&time_lock);
+    while(!StartTime.empty()){
+      StartTime.pop();
+      attemptNo.pop();
     }
+  pthread_mutex_unlock(&time_lock);
+
+  //last check
+  pthread_mutex_lock(&window_lock);
+    SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
+  pthread_mutex_unlock(&window_lock);
+  if(SENDER_WINDOW_SIZE < WINDOW_SIZE){
+    tempQ.pop();
+    tempAT.pop();
+    pthread_mutex_lock(&time_lock);
+    while(!tempQ.empty()){
+      StartTime.push(tempQ.front());
+      tempQ.pop();
+      attemptNo.push(tempAT.front());
+      tempAT.pop();
+    }
+    pthread_mutex_unlock(&time_lock);
+    return;
+  }
+  
+  //resend
+  for(int i=0;i<SENDER_WINDOW_SIZE;i++){
+
+    pthread_mutex_lock(&window_lock);
+      unsigned char* packet = SENDER_WINDOW.front();
+      SENDER_WINDOW.pop();
+      SENDER_WINDOW.push(packet);
+    pthread_mutex_unlock(&window_lock);
+    
+    struct timespec start2;
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start2);
+    if(sendto(sockfd,packet,MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
+     Error("send error");
+
+    trasmtNo++;
+
+    pthread_mutex_lock(&time_lock);
+    StartTime.push(start2);
+    attemptNo.push(tempAT.front()+1);
+    tempAT.pop();
+    pthread_mutex_unlock(&time_lock);
 
   }
 
@@ -232,8 +282,8 @@ int main(int argc, char const *argv[]) {
   PORT = 8080;              //default port
   MAX_PACKET_LEN = 256 ;
   PACKET_GEN_RATE = 20;
-  MAX_PACKETS = 100;
-  WINDOW_SIZE = 10 ;      //Max WS = 2^(SNF-1)
+  MAX_PACKETS = 20;
+  WINDOW_SIZE = 4 ;      //Max WS = 2^(SNF-1)
   BUFFER_SIZE = 100;
 
 
@@ -253,13 +303,7 @@ int main(int argc, char const *argv[]) {
   //initailize global var
   RTT_SUM = 0 ; 
   PACK_SENT = 0;
-
-  for(int i=0;i<WINDOW_SIZE;i++){
-
-    attemptNo.push_back(0);
-
-  }
-
+  trasmtNo = 0;
 
   sockfd = socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
   address.sin_family = AF_INET;
@@ -281,14 +325,15 @@ int main(int argc, char const *argv[]) {
   if(rcvErr!=0)
     Error("cant create thred to recv ack");
 
+  int p_sent = 0;
 
-
-  while(PACK_SENT < MAX_PACKETS ){
-    pthread_mutex_lock(&attempt_lock);
+  while(p_sent < MAX_PACKETS ){
+    pthread_mutex_lock(&window_lock);
     int SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
-    pthread_mutex_unlock(&attempt_lock);
+    p_sent = PACK_SENT;
+    pthread_mutex_unlock(&window_lock);
 
-    while( SENDER_WINDOW_SIZE < WINDOW_SIZE  && PACK_SENT < MAX_PACKETS ){
+    while( SENDER_WINDOW_SIZE < WINDOW_SIZE  && p_sent < MAX_PACKETS ){
       
       //get next packet in queue
       bool con = false;
@@ -314,34 +359,46 @@ int main(int argc, char const *argv[]) {
 
       pthread_mutex_lock(&time_lock);
       StartTime.push(start);
+      attemptNo.push(1);
       pthread_mutex_unlock(&time_lock);
       // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[seqNo]);
+      if(p_sent == 0)
+        packet[3] = (unsigned char)WINDOW_SIZE;
+
 
       if(sendto(sockfd,packet,MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
         Error("send error");
 
       // UNACK_PACK_COUNT++;
-      pthread_mutex_lock(&attempt_lock);
+      trasmtNo++;
+
+      pthread_mutex_lock(&window_lock);
       SENDER_WINDOW.push(packet);
-      attemptNo[seqNo]+=1;
       SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
-      pthread_mutex_unlock(&attempt_lock);
+      p_sent = PACK_SENT;
+      pthread_mutex_unlock(&window_lock);
 
     }
 
 
 
     if(SENDER_WINDOW_SIZE == WINDOW_SIZE){
+      // wait reset clock send pack then continue till window
         resend_packets();
-        pthread_mutex_lock(&attempt_lock);
+        pthread_mutex_lock(&window_lock);
         SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
-        pthread_mutex_unlock(&attempt_lock);
+        p_sent = PACK_SENT;
+        pthread_mutex_unlock(&window_lock);
     }
-
 
   }
 
-
+  endF=true;
+  usleep(1000);  //sleep for 1millisec
+  cout<<"\n";
+  cout<<"Output :  PktRate = " <<PACKET_GEN_RATE << " Length = "<< MAX_PACKET_LEN  << "  ";
+  cout<< fixed<<setprecision(2)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
+  pthread_join(tid,NULL);
   exit(EXIT_SUCCESS);
   return 0;
 
