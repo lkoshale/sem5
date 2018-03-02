@@ -14,10 +14,9 @@
 
 using namespace std;
 
+bool DEBUG;
 double PACKET_ERROR_RATE;  //atof(const chr*)
-
-// #define PORT 8080
-int PORT;
+int PORT,MAX_PACKETS,SNF,WINDOW_SIZE,BUFFER_SIZE;
 
 void Error(string cause ){
   string er = "ERROR : "+cause+" : ";
@@ -25,16 +24,53 @@ void Error(string cause ){
   exit(EXIT_SUCCESS);
 }
 
+void printTime( int i,struct timespec start ){
+	double sTime = start.tv_sec*1e6 + start.tv_nsec/1e3 ;  //in micro sec
+  char tstr[10];
+  sprintf(tstr,"%d",(int)sTime % 1000);
+  tstr[2]='\0';
+	cout<<"Seq# "<<i<<" "<<"  Time Received : "<<(int)(sTime/1000) << ":"<< tstr << "\n";
+}
+
+void setInput( const char* arg, const char* val ){
+  if(strcmp(arg,"-d")==0)
+    DEBUG = true;
+  else if(strcmp(arg,"-p")==0)
+    PORT = atoi(val);
+  else if(strcmp(arg,"-N")==0)
+    MAX_PACKETS = atoi(val);
+  else if(strcmp(arg,"-n")==0)
+  	SNF = atoi(val);
+  else if(strcmp(arg,"-W")==0)
+  	WINDOW_SIZE = atoi(val);
+  else if(strcmp(arg,"-B")==0)
+  	BUFFER_SIZE = atoi(val);
+  else if(strcmp(arg,"-e")==0)
+    PACKET_ERROR_RATE = atof(val);
+  else
+    Error("Invalid command line argument ");
+
+}
 
 int main(int argc, char const *argv[]) {
 
+	DEBUG = false;
 	PACKET_ERROR_RATE = 0.30;
+	PORT = 8080;
+	MAX_PACKETS = 100;
+	WINDOW_SIZE = 10;
+	BUFFER_SIZE = 100;
 
-  if(argc > 1){
-	PORT = atoi(argv[1]);
-  }else{
-	printf("please provide a PORT no in command line\n");
-	exit(0);
+	if(argc%2==0 && argc > 1){
+    DEBUG = true;
+    for(int i=2;i<argc;i+=2){
+      setInput(argv[i],argv[i+1]);
+    }
+  }
+  else if(argc > 1){
+    for(int i=1;i<argc;i+=2){
+      setInput(argv[i],argv[i+1]);
+    }
   }
 
   int sockid = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
@@ -54,8 +90,10 @@ int main(int argc, char const *argv[]) {
 
   socklen_t addressLen = sizeof(address);
 
-  int p = 1;
-  while (true) {
+  int PACKET_COUNT = 0;
+  vector< struct timespec> ArrivalTime(WINDOW_SIZE);
+
+  while (PACKET_COUNT < MAX_PACKETS) {
 
 	  char buffer[1024]={0};
 
@@ -70,25 +108,38 @@ int main(int argc, char const *argv[]) {
 		 break;
 	  }
 
-	
-	  int v = rand()%100;
-//v < PACKET_ERROR_RATE*100 ||
-	  if( v < PACKET_ERROR_RATE*100 ){
+	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ArrivalTime[(int)buffer[0]]);
+
+	  int v = rand()%10000000;
+	  if( v < PACKET_ERROR_RATE*10000000){
 	  	//Error drop the packet no ack
-	  	cout<<"droped "<<(int)buffer[0]<<"\n";
+
 	  }
 	  else{
+
 	  	char sendmsg[15];
 	  	sprintf(sendmsg,"%d", (int)buffer[0] );
 	  	if(sendto(sockid,sendmsg,strlen(sendmsg),0,(struct sockaddr *)& address,sizeof(address)) != strlen(sendmsg))
         Error("send error");
 
-     cout<<(int)buffer[0]<<"\n";
+
+     PACKET_COUNT++;
+     // got whole window
+     if(PACKET_COUNT % WINDOW_SIZE == 0){
+     	if(DEBUG)
+     		for(int i=0;i<ArrivalTime.size();i++)
+     			printTime(i,ArrivalTime[i]);
+     	}
+
+
+     	if(PACKET_COUNT == MAX_PACKETS && (PACKET_COUNT % WINDOW_SIZE) != 0 ){
+     		if(DEBUG)
+     			for(int i=0;i< (PACKET_COUNT % WINDOW_SIZE);i++)
+     				printTime(i,ArrivalTime[i]);
+     	}
+
 	  }
 
-	  
-  
-	  p++;
   }
 
   return 0;

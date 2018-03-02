@@ -15,10 +15,10 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <iomanip>
 
 using namespace std;
 
-// #define PORT 8080
 ///////////////////////////////
 
 bool DEBUG ;
@@ -49,6 +49,8 @@ vector < struct timespec > StartTime;
 vector<int>attemptNo;
 pthread_mutex_t attempt_lock;
 /////////////////////////
+int trasmtNo;
+///////////////////
 
 void Error(string cause ){
   string er = "ERROR : "+cause+" : ";
@@ -148,8 +150,13 @@ void* recive_ACK_fn(void* args){
      	RTT_SUM+=result;
       PACK_SENT++;
 
-      if(DEBUG)
-      	cout<<"Seq# "<<seqNo<<" Time Generated : "<< start.tv_sec*1e6 + start.tv_nsec/1e3 <<" RTT : "<<result<<" Num of attempts: "<<attemptNo[seqNo]<<"\n";
+      double sTime = start.tv_sec*1e6 + start.tv_nsec/1e3 ;  //in micro sec
+      char tstr[10];
+      sprintf(tstr,"%d",(int)sTime % 1000);
+      tstr[2]='\0';
+
+     if(DEBUG)
+        cout<<fixed<<setprecision(2)<<"Seq# "<<seqNo<<" Time Generated : "<< (int)(sTime/1000) << ":"<< tstr <<"  RTT : "<<result/1000<<"  Num of attempts: "<<attemptNo[seqNo]<<"\n";
 
       pthread_mutex_lock(&attempt_lock);
       	attemptNo[seqNo]=0;
@@ -200,7 +207,11 @@ void resend_packets(vector<int>misedPack){
 				if(sendto(sockfd,SENDER_WINDOW[misPack[i]],MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
        	 Error("send error");
 
+       	trasmtNo++;
+       	pthread_mutex_lock(&attempt_lock);
        	attemptNo[misPack[i]]+=1;
+       	pthread_mutex_unlock(&attempt_lock);
+
       }
 
 		}
@@ -249,6 +260,7 @@ int main(int argc, char const *argv[]) {
   //initailize global var
   RTT_SUM = 0 ; 
   PACK_SENT = 0;
+  trasmtNo = 0;
 
   for(int i=0;i<WINDOW_SIZE;i++){
   	unsigned char* temp = NULL;
@@ -264,7 +276,7 @@ int main(int argc, char const *argv[]) {
 
 
 
- 	sockfd = socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
+  sockfd = socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
   address.sin_family = AF_INET;
   address.sin_port = htons(PORT);
   address.sin_addr.s_addr = inet_addr(IPADDRS.c_str());
@@ -319,11 +331,12 @@ int main(int argc, char const *argv[]) {
 	 		int seqNo = (int)packet[0];
 	 		SENDER_WINDOW[seqNo]= packet;
 	 		StartTime[seqNo] = start;
-	 		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[seqNo]);
+	 		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[seqNo]);
 
     	if(sendto(sockfd,packet,MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
         Error("send error");
 
+      trasmtNo++;
       UNACK_PACK_COUNT++;
       pthread_mutex_lock(&attempt_lock);
       attemptNo[seqNo]+=1;
@@ -347,6 +360,11 @@ int main(int argc, char const *argv[]) {
     	}
       pthread_mutex_unlock(&ack_lock);
   		
+  		if(PACK_SENT == (MAX_PACKETS - (MAX_PACKETS%WINDOW_SIZE)) ){
+  			if(MAX_PACKETS%WINDOW_SIZE != 0)
+  				WINDOW_SIZE = MAX_PACKETS%WINDOW_SIZE;
+
+  		}
 
   	}
 
@@ -355,7 +373,9 @@ int main(int argc, char const *argv[]) {
 
   endF=true;
   usleep(1000);  //sleep for 1millisec
-  cout<<get_RTT_AVE() << " "<< PACK_SENT << "\n";
+  cout<<"\n";
+  cout<<"Output :  PktRate = " <<PACKET_GEN_RATE << " Length = "<< MAX_PACKET_LEN  << "  ";
+  cout<< fixed<<setprecision(2)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
   pthread_join(tid,NULL);
   exit(EXIT_SUCCESS);
   // pthread_join(recvThread,NULL);
