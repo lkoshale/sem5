@@ -58,7 +58,7 @@ int main(int argc, char const *argv[]) {
 	PACKET_ERROR_RATE = 0.30;
 	PORT = 8080;
 	MAX_PACKETS = 100;
-	WINDOW_SIZE = 10;
+	WINDOW_SIZE = 8;
 	BUFFER_SIZE = 100;
 
 	if(argc%2==0 && argc > 1){
@@ -139,9 +139,9 @@ int main(int argc, char const *argv[]) {
      	}
 
 	  }
-
-  }
-
+		
+  }		
+		
   return 0;
 }
 

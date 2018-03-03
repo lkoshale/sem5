@@ -132,11 +132,16 @@ void* recive_ACK_fn(void* args){
          exit(1);
       }
 
-
       //packet sent properly
       int seqNo = atoi(recvBuff);
       if(seqNo >= WINDOW_SIZE)
       	Error("Sequence no out of range in ack");
+
+      pthread_mutex_lock(&attempt_lock);
+      	int at = attemptNo[seqNo];
+      pthread_mutex_unlock(&attempt_lock);
+
+      
 
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
      	
@@ -147,7 +152,7 @@ void* recive_ACK_fn(void* args){
       SenderWindowACK[seqNo] = 1;	
       pthread_mutex_unlock(&ack_lock);
 
-     	RTT_SUM+=result;
+      RTT_SUM+=result;
       PACK_SENT++;
 
       double sTime = start.tv_sec*1e6 + start.tv_nsec/1e3 ;  //in micro sec
@@ -155,12 +160,13 @@ void* recive_ACK_fn(void* args){
       sprintf(tstr,"%d",(int)sTime % 1000);
       tstr[2]='\0';
 
-     if(DEBUG)
-        cout<<fixed<<setprecision(2)<<"Seq# "<<seqNo<<" Time Generated : "<< (int)(sTime/1000) << ":"<< tstr <<"  RTT : "<<result/1000<<"  Num of attempts: "<<attemptNo[seqNo]<<"\n";
 
-      pthread_mutex_lock(&attempt_lock);
-      	attemptNo[seqNo]=0;
-      pthread_mutex_unlock(&attempt_lock);
+     if(DEBUG)
+        cout<<fixed<<setprecision(2)<<"Seq# "<<seqNo<<" Time Generated : "<< (int)(sTime/1000) << ":"<< tstr <<"  RTT : "<<result/1000<<"  Num of attempts: "<<at<<"\n";
+
+      // pthread_mutex_lock(&attempt_lock);
+      // 	attemptNo[seqNo]=0;
+      // pthread_mutex_unlock(&attempt_lock);
 
 	}
 
@@ -171,10 +177,10 @@ vector<int> check_miss(){
 	vector<int> Pmiss;
 
 	for(int i=0;i<WINDOW_SIZE;i++){
-		// pthread_mutex_lock(&ack_lock);
+		 // pthread_mutex_lock(&ack_lock);
 		if(SenderWindowACK[i]==-1)
 			  Pmiss.push_back(i);
-		// pthread_mutex_unlock(&ack_lock);
+		 // pthread_mutex_unlock(&ack_lock);
 	}
 	
 
@@ -205,7 +211,7 @@ void resend_packets(vector<int>misedPack){
 
 				clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &StartTime[misPack[i]]);
 				if(sendto(sockfd,SENDER_WINDOW[misPack[i]],MAX_PACKET_LEN,0,(struct sockaddr *)& address,sizeof(address)) != MAX_PACKET_LEN)
-       	 Error("send error");
+       			 Error("send error");
 
        	trasmtNo++;
        	pthread_mutex_lock(&attempt_lock);
@@ -218,9 +224,13 @@ void resend_packets(vector<int>misedPack){
 
 		
 		misPack = check_miss();
+		vector<int>::iterator it;
+		if ( ( it = find(attemptNo.begin(), attemptNo.end(), 10) ) != attemptNo.end() ){
+			cout<<"\n";
+			cout<<"Output :  PktRate = " <<PACKET_GEN_RATE << " Length = "<< MAX_PACKET_LEN  << "  ";
+  		cout<< fixed<<setprecision(2)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
 
-		if ( find(attemptNo.begin(), attemptNo.end(), 10) != attemptNo.end() ){
-			Error("maximum attempt for re transmitting packet exceeded");
+			Error(to_string(it - attemptNo.begin())+" seNo with maximum attempt for re transmitting packet exceeded");
 			exit(EXIT_SUCCESS);
 			break;
 		}
@@ -240,7 +250,7 @@ int main(int argc, char const *argv[]) {
 	MAX_PACKET_LEN = 256 ;
 	PACKET_GEN_RATE = 20;
 	MAX_PACKETS = 100;
-	WINDOW_SIZE = 10 ;			//Max WS = 2^(SNF-1)
+	WINDOW_SIZE = 8 ;			//Max WS = 2^(SNF-1)
 	BUFFER_SIZE = 100;
 
 
@@ -339,7 +349,7 @@ int main(int argc, char const *argv[]) {
       trasmtNo++;
       UNACK_PACK_COUNT++;
       pthread_mutex_lock(&attempt_lock);
-      attemptNo[seqNo]+=1;
+      attemptNo[seqNo]=1;
      	pthread_mutex_unlock(&attempt_lock);
 
     }
@@ -375,7 +385,7 @@ int main(int argc, char const *argv[]) {
   usleep(1000);  //sleep for 1millisec
   cout<<"\n";
   cout<<"Output :  PktRate = " <<PACKET_GEN_RATE << " Length = "<< MAX_PACKET_LEN  << "  ";
-  cout<< fixed<<setprecision(2)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
+  cout<< fixed<<setprecision(5)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
   pthread_join(tid,NULL);
   exit(EXIT_SUCCESS);
   // pthread_join(recvThread,NULL);
