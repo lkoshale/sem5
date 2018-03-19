@@ -1,0 +1,69 @@
+
+How to compile and Run :
+
+1. Selective Repeat : 
+    compilation : make all (using make file)
+    
+    Run : Run in two differmt Terminals ( for diff machine provide -s IPADDRS as an argument to ./senderSR)
+    Reciever should be executed first then sender.
+    Sender & Reciever : for debug first argument must be -d other arguments can be given in any order.
+    ex :
+        ./recieverSR -d -p 8080 -N 100 -W 8 -e 0.1
+        ./senderSR -d -p 8080 -N 100 -W 8 
+    ( without arguments it runs with default args)
+    
+    Reciever command line arguments :
+    • -d – Turn ON Debug Mode (OFF if -d flag not present)
+    • -p integer – Receiver’s Port Number
+    • -N integer – MAX_PACKETS
+    • -n integer – Sequence Number Field Length (in bits)
+    • -W integer – WINDOW_SIZE (SWS = RWS)
+    • -B integer – BUFFER_SIZE
+    • -e double – PACKET_ERROR_RATE
+
+    Sender command line arguments :
+    • -d – Turn ON Debug Mode (OFF if -d flag not present)
+    • -s string – Receiver Name or IP address.
+    • -p integer – Receiver’s Port Number
+    • -n integer – Sequence Number Field Length (in bits)
+    • -L integer – MAX_PACKET_LENGTH, in bytes
+    • -R integer – PACKET_GEN_RATE, in packets per second
+    • -N integer – MAX_PACKETS
+    • -W integer – WINDOW_SIZE (Assume that SWS = RWS)
+    • -B integer – BUFFER_SIZE
+
+    ( if window size is given to sender then same window size should be given reciever also )
+    
+    
+    
+2. GBN 
+    compilation : make all 
+    
+    Run : Run in two differmt Terminals  ( for diff machine provide -s IPADDRS as an argument to ./senderGBN)
+    
+    ex : 
+        ./recieverGBN -d -p 9000 -n 100 -e 0.01
+        ./senderGBN -d -p 9000 -n 100 -w 25 
+
+    for debug first argument must be -d other arguments can be given in any order.
+    
+    arguments that can be given :
+    
+    Receiver args :
+    • -d – Turn ON Debug Mode (OFF if -d flag not present)
+    • -p integer – Receiver’s Port Number
+    • -n integer – MAX_PACKETS
+    • -e float – Packet Error Rate (RANDOM_DROP_PROB)
+
+    Sender Args :
+    • -d – Turn ON Debug Mode (OFF if -d flag not present)
+    • -s string – Receiver Name or IP address.
+    • -p integer – Receiver’s Port Number
+    • -l integer – PACKET_LENGTH, in bytes
+    • -r integer – PACKET_GEN_RATE, in packets per second
+    • -n integer – MAX_PACKETS
+    • -w integer – WINDOW_SIZE
+    • -b integer – MAX_BUFFER_SIZE
+
+    
+for PORT NO any port number greater than 8000 can be given

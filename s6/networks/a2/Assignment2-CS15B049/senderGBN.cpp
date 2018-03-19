@@ -1,4 +1,4 @@
-
+  
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -184,7 +184,7 @@ void resend_packets(){
   pthread_mutex_unlock(&time_lock);
 
   if(curAT > 10 )
-    Error("maximum attempt for re transmitting packet exceeded");
+    Error(to_string((int)(SENDER_WINDOW.front()[0]))+" maximum attempt for re transmitting packet exceeded");
 
   pthread_mutex_lock(&window_lock);
     int SENDER_WINDOW_SIZE = SENDER_WINDOW.size();
@@ -245,14 +245,22 @@ void resend_packets(){
     return;
   }
   
-  //resend
-  for(int i=0;i<SENDER_WINDOW_SIZE;i++){
 
-    pthread_mutex_lock(&window_lock);
-      unsigned char* packet = SENDER_WINDOW.front();
+  //resend
+  vector<unsigned char*> vec;
+   pthread_mutex_lock(&window_lock);
+   for(int i=0;i<SENDER_WINDOW.size();i++){
+    unsigned char* packet = SENDER_WINDOW.front();
       SENDER_WINDOW.pop();
       SENDER_WINDOW.push(packet);
-    pthread_mutex_unlock(&window_lock);
+      vec.push_back(packet);
+   }
+   pthread_mutex_unlock(&window_lock);
+
+
+  
+  for(int i=0;i<vec.size();i++){
+    unsigned char* packet = vec[i];
     
     struct timespec start2;
 
@@ -284,7 +292,7 @@ int main(int argc, char const *argv[]) {
   PACKET_GEN_RATE = 20;
   MAX_PACKETS = 20;
   WINDOW_SIZE = 4 ;      //Max WS = 2^(SNF-1)
-  BUFFER_SIZE = 100;
+  BUFFER_SIZE = 1000;
 
 
   //debug always the first arg -d
@@ -397,7 +405,7 @@ int main(int argc, char const *argv[]) {
   usleep(1000);  //sleep for 1millisec
   cout<<"\n";
   cout<<"Output :  PktRate = " <<PACKET_GEN_RATE << " Length = "<< MAX_PACKET_LEN  << "  ";
-  cout<< fixed<<setprecision(2)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
+  cout<< fixed<<setprecision(5)<<"Retran Ratio = "  << (float)trasmtNo/PACK_SENT << "  Avg RTT = "<<get_RTT_AVE()/1000 << "\n";
   pthread_join(tid,NULL);
   exit(EXIT_SUCCESS);
   return 0;
