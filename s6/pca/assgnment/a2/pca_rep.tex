@@ -1,0 +1,146 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+%opening
+\title{CS6560 : Assignment 2 }
+\author{by CS15B049}
+\date{\today}
+\begin{document}
+
+\maketitle
+
+\section{IBM POWER9 :}
+IBM POWER9 is a collection of superscalar processor with symetric multiprocessing and is based on power architecture(a derivative power ISA ) manufacutred by 14nmFinFet technology.
+\subsection{ Processor variants: }
+\begin{itemize}
+     \item Based on design :
+     \begin{enumerate}
+     \item  IBM power9 SO : scale out variant with dual socket and Direct attached memory(8 DDR4 Ports) with upto adaptive 64B/128B reads.
+     \item IBM power9 SU : scale up variant based on NUMA architecture with 8 buffered channels and maximum bandwidth of 230GB/s.
+    \end{enumerate}
+    
+  \item Based on Cores:\\
+  here 4 and 8 are number of slices( a 64-bit processor with single ALU ,Load Store Unit , VSU(floating point and SMID) ) and a super-slice is combination of two slices.
+  \begin{enumerate}
+     \item SMT4 : 4 way multi-threading  suitable for Linux Ecosystem and has more virtualisation granularity.it has a 32kb L1 cache with 32kb L1 datacache and an instruction sequencing unit with an instruction fetch unit which gives instructions to 2 super-slices.\\
+     \item SMT8 : 8 way multi-threading for PowerVM Ecosystem. it has two sets of L1 caches and instruction fetch units and instruction sequencing units to give instructions to 4 super-slices
+    \end{enumerate}
+\end{itemize}
+
+\subsection{ ISA and Pipelining:}
+12 stage pipelining 5 less than power8 processors with fetch to compute by reduced by 5 cycles ( as removed the instruction grouping and reduced carcking in pipeline steps). Can complete upto 128 ( 64 for SMT4) instructions per cycle. 
+
+\subsection{Cache Memory :}
+It has L3 cache of sixe 120MB based on shared memory NUCA architecture  where each core has 10MB capicity and 512k L2 cache. the cache are 12*20 way cache associative caches are fed by 7 TB/s on-chip bandwidth.
+
+\subsection{Stucture of a Core(SMT4) :}
+\begin{itemize}
+ \item instruction Fecth : 32kb , 8-way instruction cache with 8 fetch and 5 decodes and 1 brach execution.
+ \item Vector scalar units : it has 4x ALU and 4x FP ,2x Fixed divide and 1 Decimal FP and 1 Cryptography units.
+ \item Load store : 32kb 8 way data cache with upto 4 DW load or store
+\end{itemize}
+
+
+\section{ AMD RYZEN :}
+Amd Ryzen branded cpus manufacture by 14nmFinFet technology and are based on Zen cpu microarchitecture created by AMD. Zen is based on SoC design and that allows it to scale from laptop and miniature desktops to large scale servers. It has 40\% more IPC than its ancestor cpus and consumes lower power.
+\subsection{Zen Microarchitecture : Main Features}
+\begin{itemize}
+ \item fetches upto 4 x86 instructions : has 4-way instruction cache of size 64k 
+ \item 4 integer units with large namespace(168 registers)
+ \item 2 load store units : 72 out of order loads supported
+ \item 2 floating point units : has 4 builtin pipes
+ \item 8-way L1-cache of size 32kb
+ \item 8-way L2 cache of size 512kb
+ \item supports SMT with upto 2 threads per core
+\end{itemize}
+
+\subsection{Fetch And decpde :}
+\begin{itemize}
+ \item eatch fecth is 32 byte long and it uses Decoupled Branch Prediction
+ \item The TLB heirachy has 8 entry L0 TLB  with 64 entry L1 TLB and 512 entry L2 TLB
+ \item The BTB has 2 branches and are divded into L1 and L2 BTBs
+ \item Instruction cache is 4-way associative of size 64K
+ \item Can decode 4 x86 instructions
+ \item has Op cahe and Micro-op Queue  
+ \end{itemize}
+
+\subsection{Execute :}
+\begin{itemize}
+ \item has 6x14 entry scheduling queues and 192 entry retire queue
+ \item can execute 6 issue per cycle : 4 ALU , 2 AGU
+ \item 168 entry Register File 
+ \item can execute 2 branches per cycle
+\end{itemize}
+
+\subsection{Load and Store :}
+\begin{itemize}
+ \item Can handle 72 out of order loads
+ \item 64 entry L1 TLB ,1.5K entry L2 TLB
+ \item Data caches are 8 way of size 32kb
+\end{itemize}
+
+\subsection{Cahe memory :}
+\begin{itemize}
+\item L1 cache uses Write-Back policy
+ \item Private 512k L2 cache
+ \item large L3 cache where L3 is fillled with L2's victims
+ \item Has L2 and L3 data prefetcher
+\end{itemize}
+
+\section{INTEL SKYLAKE :}
+Skylake is the latest processor microarchitecture launched  by intel based on 14nmFinFet manufacturing process technology. It has better CPU and GPU performance then its ancestor with lower power consuption. It supports upto 2 threads per core and come with various intel techonologies as intel advanced vectore extension, optane memory,intel hyper-threading technology and has Four-channel DDR4-2666 memory support.
+
+\subsection{Fetch and Decode: }
+\begin{itemize}
+ \item  Complex CISC instructions are broken into RISC like micro-ops
+ \item  Predecoder handles variable length encoding and parallel decoder can handle upto 5 x86 per cycle.
+ \item Sandy Bridge Predictor is used which is two level predictor and uses BTB for L1 as well as uop caches.
+ \item Sandy Bridge returns a stack predictor with 16 entries.
+\end{itemize}
+
+\subsection{Cache Memory :}
+\begin{itemize}
+ \item 8-way L0 cache with 32 sets
+ \item Instruction Cache : 32K, 8-way L1-I cache , which are shared by two threads running on core
+ \item  Data cache : 32k , 8-way L1-D cache with write back policy
+ \item 4-way ,256K unified L2 cache with non-inclusive with write back policy
+ \item LLC : 2MB per core ,upto 16-way associative L3 cache with write back and inclusive.
+\end{itemize}
+
+\subsection{ Multithreading and SIMD : }
+\begin{itemize}
+ \item SMT enables two threads to share the pipeline
+ \item its SIMD can process 512 bits of integer ot floating-point data with a single instruction
+\end{itemize}
+
+\section{Sources :}
+\begin{itemize}
+\item IBM power9 : 
+ \begin{enumerate}
+  \item \href{https://en.wikipedia.org/wiki/POWER9}{Wikipedia}
+  \item \href{https://www.ibm.com/developerworks/community/wikis/home?lang=en#/wiki/Power\%20Systems/page/AIX\%20Virtual\%20User\%20Group\%20-\%20USA}{IBM developerworks}
+ \end{enumerate}
+ \item AMD : 
+ \begin{enumerate}
+  \item \href{https://en.wikipedia.org/wiki/Zen_(microarchitecture)}{Wikipedia}
+
+ \end{enumerate}
+ \item Skylake : 
+  \begin{enumerate}
+  \item  \href{https://en.wikichip.org/wiki/intel/microarchitectures/skylake_(client)}{wikichip.org}
+ \item \href{https://en.wikipedia.org/wiki/Skylake_(microarchitecture)}{Wikipedia}
+ \end{enumerate}
+ 
+ 
+ 
+
+\end{itemize}
+
+
+  
+\end{document}
+
+
