@@ -46,7 +46,7 @@ int main(int argc,char* argv[]) {
 
     #pragma omp parallel shared(a,b,c,chunk)
     {
-        #pragma omp parallel for schedule(dynamic,chunk)
+        #pragma omp for schedule(dynamic,chunk)
         for(int i=0; i< N; i++ ) {
             if(i%2 == 0)
                 a[i] = b[i] - c[i];
