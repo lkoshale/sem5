@@ -5,6 +5,7 @@
         "initializer_list": "c",
         "string_view": "c",
         "utility": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "ratio": "c"
     }
 }

@@ -1,0 +1,15 @@
+\BOOKMARK [1][-]{section.1}{OpenMp : }{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{OpenMp constructs used :}{section.1}% 2
+\BOOKMARK [1][-]{section.2}{Analyzing parallel program performances}{}% 3
+\BOOKMARK [2][-]{subsection.2.1}{Run Time for different Schedule}{section.2}% 4
+\BOOKMARK [3][-]{subsubsection.2.1.1}{For Program A}{subsection.2.1}% 5
+\BOOKMARK [3][-]{subsubsection.2.1.2}{For program B :}{subsection.2.1}% 6
+\BOOKMARK [1][-]{section.3}{Chunk size vs Time vs Number of Thread}{}% 7
+\BOOKMARK [2][-]{subsection.3.1}{Program A :}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Dynmaic:}{subsection.3.1}% 9
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Static:}{subsection.3.1}% 10
+\BOOKMARK [3][-]{subsubsection.3.1.3}{Guided:}{subsection.3.1}% 11
+\BOOKMARK [2][-]{subsection.3.2}{Program B :}{section.3}% 12
+\BOOKMARK [3][-]{subsubsection.3.2.1}{Dynmaic:}{subsection.3.2}% 13
+\BOOKMARK [3][-]{subsubsection.3.2.2}{Static:}{subsection.3.2}% 14
+\BOOKMARK [3][-]{subsubsection.3.2.3}{Guided:}{subsection.3.2}% 15

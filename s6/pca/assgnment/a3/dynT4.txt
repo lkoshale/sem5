@@ -1,0 +1,14 @@
+0.583772 10 
+0.283697 100 
+0.224961 1000 
+0.249917 10000 
+0.216235 100000 
+0.216039 1000000 
+0.245760 10000000 
+0.739920 100000000 
+
+
+plot "sT2.txt" using 1:2 with lines  title 'static',"bsT2.txt" using 1:2 with lines  title 'guided',"dynT2.txt" using 1:2 with lines  title 'dynamic'
+,"sT1.txt" using 1:2 with lines  title '1'
+
+plot "bsT4.txt" using 1:2 with lines  title '4',"bsT3.txt" using 1:2 with lines  title '3',"bsT2.txt" using 1:2 with lines  title '2',"bsT1.txt" using 1:2 with lines  title '1'

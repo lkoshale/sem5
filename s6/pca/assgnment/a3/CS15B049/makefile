@@ -1,0 +1,2 @@
+CS15B049 : CS15B049.c
+	gcc -g -fopenmp -o CS15B049 CS15B049.c

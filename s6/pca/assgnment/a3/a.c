@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define N 114748360
+#define N 100000000
 
 int a[N],b[N],c[N];
 
@@ -24,40 +24,43 @@ int main(int argc,char* argv[]) {
     int nThreads;
     struct timespec start,stop;
 
-    if ( argc != 2 ) {
-        printf("Number of threads not specified\n");
-        exit(-1);
-    }
-    nThreads = atoi(argv[1]);
-    if ( nThreads <= 0 ) {
-    printf("Num threads <= 0\n");
-    exit(-1);
-    }
+    // if ( argc != 2 ) {
+    //     printf("Number of threads not specified\n");
+    //     exit(-1);
+    // }
+    // nThreads = atoi(argv[1]);
+    // if ( nThreads <= 0 ) {
+    // printf("Num threads <= 0\n");
+    // exit(-1);
+    // }
     
     for(int i=0; i< N; i++ ) {
         a[i] = 1;b[i]=2;c[i]=0;
     }
-        
-    omp_set_num_threads(nThreads);
-    double t1,t2;
-    int chunk = N/nThreads;
+    // printf("nthreads chunk time\n");
+    nThreads = 1;
+    // int num = 10;
+    while (nThreads <= 4){
+        omp_set_num_threads(nThreads);
+        double t1,t2;
+        int chunk = N/nThreads;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+        t1 = rtclock();
 
-    #pragma omp parallel shared(a,b,c,chunk)
-    {
-        #pragma omp for schedule(dynamic,chunk)
-        for(int i=0; i< N; i++ ) {
-            if(i%2 == 0)
-                a[i] = b[i] - c[i];
-            else
-                a[i] = b[i] + c[i];
+        #pragma omp parallel shared(a,b,c,chunk)
+        {
+            #pragma omp for schedule(guided,chunk)
+            for(int i=0; i< N; i++ ) {
+                if(i%2 == 0)
+                    a[i] = b[i] - c[i];
+                else
+                    a[i] = b[i] + c[i];
+            }
         }
+
+        t2 = rtclock();
+        printf("%lf %d \n",t2-t1,nThreads);
+        nThreads++;
     }
-
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
-    double result = (stop.tv_sec - start.tv_sec) * 1e6 + (stop.tv_nsec - start.tv_nsec) / 1e3;    // in microseconds
-    printf("Time : %lf %d \n",result,nThreads);
-
     return 0;
 }
